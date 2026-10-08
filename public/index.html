@@ -1,90 +1,115 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Bridge with friends</title>
 <style>
   :root {
+    --bg1: #145a43; --bg2: #0b3a2c;
+    --text: #eef6f1; --muted: #b8d6c8;
+    --panel: rgba(0,0,0,.22); --solid: #0e3f2f; --line: rgba(255,255,255,.2);
+    --accent: #e3bf63; --accent-ink: #2a2208; --accent-text: #e3bf63;
     --felt: #145a43;
-    --felt-deep: #0b3a2c;
-    --felt-light: #1d7157;
-    --paper: #fbf9f2;
-    --ink: #1c1c1c;
-    --red: #b3262d;
-    --brass: #e3bf63;
-    --mist: #b8d6c8;
+    --paper: #fbf9f2; --ink: #1c1c1c; --red: #b3262d; --redlight: #ff9a9f;
     --serif: "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
     --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  :root[data-theme="light"] {
+    --bg1: #f6f8f4; --bg2: #dbe6dd;
+    --text: #15271f; --muted: #46655a;
+    --panel: rgba(255,255,255,.72); --solid: #ffffff; --line: rgba(0,0,0,.18);
+    --accent-text: #6e5200; --redlight: #b3262d;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; }
   body {
     min-height: 100vh;
-    background: radial-gradient(ellipse at 50% 30%, var(--felt) 0%, var(--felt-deep) 80%);
-    color: #eef6f1;
-    font-family: var(--sans);
-    font-size: 15px;
-    line-height: 1.4;
+    background: radial-gradient(ellipse at 50% 20%, var(--bg1) 0%, var(--bg2) 85%) fixed;
+    color: var(--text);
+    font-family: var(--sans); font-size: 15px; line-height: 1.4;
     padding: env(safe-area-inset-top, 0) 0 env(safe-area-inset-bottom, 0);
   }
   [hidden] { display: none !important; }
-  h1, h2 { font-family: var(--serif); font-weight: 600; margin: 0; }
+  h1, h2, h3 { font-family: var(--serif); font-weight: 600; margin: 0; }
   button { font: inherit; cursor: pointer; }
-  button:focus-visible { outline: 3px solid var(--brass); outline-offset: 2px; }
+  button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 
   /* Entry screen */
-  #entry { max-width: 420px; margin: 0 auto; padding: 56px 20px; }
+  #entry { max-width: 420px; margin: 0 auto; padding: 48px 20px; position: relative; }
   #entry h1 { font-size: 44px; line-height: 1.05; margin-bottom: 8px; }
-  #entry p { color: var(--mist); margin: 0 0 28px; }
+  #entry p { color: var(--muted); margin: 0 0 24px; }
+  #themeBtn2 { position: absolute; right: 20px; top: 16px; }
   .field { display: block; margin-bottom: 14px; }
-  .field span { display: block; margin-bottom: 4px; color: var(--mist); }
-  input {
-    width: 100%; padding: 11px 12px; font: inherit; color: var(--ink);
+  .field > span { display: block; margin-bottom: 4px; color: var(--muted); }
+  input[type="text"], input[type="number"], select {
+    width: 100%; padding: 10px 12px; font: inherit; color: var(--ink);
     background: var(--paper); border: 2px solid transparent; border-radius: 6px;
   }
-  input:focus-visible { outline: none; border-color: var(--brass); }
   .row { display: flex; gap: 10px; }
   .row > * { flex: 1; }
   .btn {
-    padding: 11px 16px; border-radius: 6px; border: 2px solid var(--brass);
-    background: var(--brass); color: #2a2208; font-weight: 600;
+    padding: 10px 16px; border-radius: 6px; border: 2px solid var(--accent);
+    background: var(--accent); color: var(--accent-ink); font-weight: 600;
   }
-  .btn.quiet { background: transparent; color: var(--brass); }
-  .btn.small { padding: 5px 10px; font-size: 13px; }
+  .btn.quiet { background: transparent; color: var(--accent-text); border-color: var(--accent-text); }
+  .btn.small { padding: 4px 10px; font-size: 13px; }
   .btn:disabled { opacity: .4; cursor: default; }
-  .or { margin: 22px 0 12px; color: var(--mist); }
+  .or { margin: 22px 0 12px; color: var(--muted); }
 
   /* Game screen */
   #game { max-width: 980px; margin: 0 auto; padding: 12px 12px 40px; }
   .topbar { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
   .topbar h2 { font-size: 22px; }
   .topbar .code { font-family: var(--serif); letter-spacing: .12em; }
-  .topbar .tools { display: flex; gap: 8px; }
+  .tools { display: flex; gap: 6px; flex-wrap: wrap; }
+  .panel { padding: 12px; background: var(--panel); border-radius: 12px; margin: 12px 0; }
+  .panel h3 { font-size: 18px; margin-bottom: 8px; }
+
+  .avatars { display: flex; flex-wrap: wrap; gap: 6px; }
+  .avatars button {
+    width: 44px; height: 44px; border-radius: 50%; font-size: 24px; line-height: 1; padding: 0;
+    background: var(--panel); border: 2px solid transparent; color: inherit;
+  }
+  .avatars button[aria-checked="true"] { border-color: var(--accent-text); background: rgba(227,191,99,.25); }
+  .avatar-picker { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; color: var(--muted); }
 
   #table {
+    --text: #eef6f1; --muted: #b8d6c8; --accent-text: #e3bf63; --panel: rgba(0,0,0,.28);
+    color: var(--text);
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(200px, 250px) minmax(0, 1fr);
     grid-template-areas: ". top ." "left mid right" ". bottom .";
-    gap: 10px;
-    padding: 14px;
-    border: 3px solid #0a2d22;
-    border-radius: 18px;
+    gap: 10px; padding: 14px;
+    border: 3px solid #0a2d22; border-radius: 18px;
     background: var(--felt);
     box-shadow: inset 0 0 0 2px rgba(227,191,99,.25);
   }
   .pos-top { grid-area: top; } .pos-left { grid-area: left; }
   .pos-right { grid-area: right; } .pos-bottom { grid-area: bottom; }
   #mid { grid-area: mid; display: grid; place-items: center; min-height: 190px; }
+  #midwrap { display: flex; flex-direction: column; align-items: center; }
 
-  .seat { text-align: center; padding: 6px; border-radius: 10px; border: 2px solid transparent; min-width: 0; }
-  .seat.turn { border-color: var(--brass); background: rgba(227,191,99,.1); }
+  .seat { position: relative; text-align: center; padding: 6px; border-radius: 10px; border: 2px solid transparent; min-width: 0; }
+  .seat.turn { border-color: var(--accent); background: rgba(227,191,99,.1); }
   .seat .who { font-family: var(--serif); font-size: 17px; }
-  .seat .who small { font-family: var(--sans); font-size: 12px; color: var(--mist); }
+  .seat .who small { font-family: var(--sans); font-size: 12px; color: var(--muted); }
   .chips { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; margin: 3px 0 6px; min-height: 18px; }
-  .chip { font-size: 11px; padding: 1px 7px; border-radius: 99px; background: rgba(0,0,0,.28); color: var(--mist); }
-  .chip.gold { background: var(--brass); color: #2a2208; }
+  .chip { font-size: 11px; padding: 1px 7px; border-radius: 99px; background: rgba(0,0,0,.3); color: var(--muted); }
+  .chip.gold { background: var(--accent); color: var(--accent-ink); }
   .seat-actions { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+
+  .avatar {
+    position: relative; width: 50px; height: 50px; margin: 0 auto 4px; padding: 0; border-radius: 50%;
+    display: grid; place-items: center; font-size: 28px; line-height: 1; color: inherit;
+    background: rgba(0,0,0,.28); border: 2px solid rgba(255,255,255,.22);
+  }
+  .avatar.empty { border-style: dashed; color: var(--muted); font-size: 20px; }
+  .avatar.off { opacity: .45; }
+  button.avatar { cursor: pointer; }
+  .seat.turn .avatar { border-color: var(--accent); }
+  .floater { position: absolute; left: 50%; top: 0; font-size: 30px; pointer-events: none; animation: floatup 1.9s ease-out forwards; }
+  @keyframes floatup { 0% { transform: translate(-50%, 0) scale(.6); opacity: 0; } 15% { opacity: 1; transform: translate(-50%, -14px) scale(1.1); } 100% { transform: translate(-50%, -64px) scale(1); opacity: 0; } }
 
   /* Cards */
   .card {
@@ -99,18 +124,19 @@
   .card .s { font-size: 20px; font-weight: 400; }
   .card.sm { width: 32px; height: 46px; font-size: 14px; }
   .card.sm .s { font-size: 16px; }
-  .card.back {
-    background: repeating-linear-gradient(45deg, #274f9b 0 4px, #2f5cae 4px 8px);
-    border: 2px solid var(--paper);
-  }
+  .card.xs { width: 26px; height: 38px; font-size: 12px; }
+  .card.xs .s { font-size: 14px; }
+  .card.back { background: repeating-linear-gradient(45deg, #274f9b 0 4px, #2f5cae 4px 8px); border: 2px solid var(--paper); }
+  button.card { transition: transform .12s; }
   button.card:disabled { cursor: default; }
-  button.card.playable { cursor: pointer; transform: translateY(-6px); border-color: var(--brass); }
+  button.card.playable { cursor: pointer; transform: translateY(-6px); border-color: var(--accent); }
   button.card.playable:hover { transform: translateY(-11px); }
   button.card.dim { opacity: .55; }
 
   .myhand { display: flex; flex-wrap: wrap; justify-content: center; padding-top: 8px; }
   .myhand .card { margin-left: -12px; }
   .myhand .card:first-child { margin-left: 0; }
+  .myhand.dealt .card { animation: dealin .4s ease-out both; animation-delay: calc(var(--i) * 40ms); }
   .suitrows { display: flex; flex-direction: column; gap: 4px; align-items: center; }
   .suitrow { display: flex; }
   .suitrow .card { margin-left: -14px; }
@@ -126,17 +152,42 @@
     gap: 4px; justify-content: center;
   }
   #trick .slot { display: grid; place-items: center; }
-  #trick .win .card { outline: 3px solid var(--brass); outline-offset: 1px; }
+  #trick .win .card { outline: 3px solid var(--accent); outline-offset: 1px; }
   .slot-top { grid-area: t; } .slot-left { grid-area: l; } .slot-right { grid-area: r; } .slot-bottom { grid-area: b; }
-  #midnote { text-align: center; color: var(--mist); font-size: 13px; margin-top: 6px; }
+  .slot .card.fresh-bottom { animation: fromBottom .3s ease-out; }
+  .slot .card.fresh-top { animation: fromTop .3s ease-out; }
+  .slot .card.fresh-left { animation: fromLeft .3s ease-out; }
+  .slot .card.fresh-right { animation: fromRight .3s ease-out; }
+  .slot.sweep-top { animation: sweepTop .45s ease-in 1.1s forwards; }
+  .slot.sweep-bottom { animation: sweepBottom .45s ease-in 1.1s forwards; }
+  .slot.sweep-left { animation: sweepLeft .45s ease-in 1.1s forwards; }
+  .slot.sweep-right { animation: sweepRight .45s ease-in 1.1s forwards; }
+  @keyframes fromBottom { from { transform: translateY(70px); opacity: 0; } }
+  @keyframes fromTop { from { transform: translateY(-70px); opacity: 0; } }
+  @keyframes fromLeft { from { transform: translateX(-80px); opacity: 0; } }
+  @keyframes fromRight { from { transform: translateX(80px); opacity: 0; } }
+  @keyframes sweepTop { to { transform: translateY(-120px); opacity: 0; } }
+  @keyframes sweepBottom { to { transform: translateY(120px); opacity: 0; } }
+  @keyframes sweepLeft { to { transform: translateX(-130px); opacity: 0; } }
+  @keyframes sweepRight { to { transform: translateX(130px); opacity: 0; } }
+  @keyframes dealin { from { transform: translateY(-34px) rotate(-8deg); opacity: 0; } }
+  #midnote { text-align: center; color: var(--muted); font-size: 13px; margin-top: 6px; min-height: 18px; }
+  #lastTrick { margin-top: 6px; text-align: center; font-size: 12px; color: var(--muted); }
+  #lastTrick .lt { display: flex; gap: 4px; justify-content: center; margin-top: 4px; }
+  #lastTrick .lt span { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 2px; border-radius: 6px; }
+  #lastTrick .lt span.w { background: rgba(227,191,99,.25); }
 
-  /* Info and actions */
-  #info { display: flex; gap: 8px 18px; flex-wrap: wrap; justify-content: space-between; margin: 12px 2px; color: var(--mist); }
-  #info b { color: #fff; font-family: var(--serif); font-size: 17px; }
-  #actions { margin: 12px 0; padding: 12px; background: rgba(0,0,0,.22); border-radius: 12px; }
+  /* Info, actions, bids */
+  #info { display: flex; gap: 6px 18px; flex-wrap: wrap; justify-content: space-between; margin: 12px 2px; color: var(--muted); }
+  #info b { color: var(--text); font-family: var(--serif); font-size: 17px; }
+  #actions { padding: 12px; background: var(--panel); border-radius: 12px; margin: 12px 0; }
   #actions .msg { margin: 0 0 8px; }
   #actions .msg.big { font-family: var(--serif); font-size: 19px; }
-  .bidgrid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; margin-bottom: 8px; max-width: 420px; }
+  #actions .note { color: var(--accent-text); }
+  .breakdown { margin: 0 0 10px; padding: 0; list-style: none; }
+  .breakdown li { display: flex; justify-content: space-between; gap: 16px; max-width: 460px; padding: 2px 0; }
+  .btnrow { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  .bidgrid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; margin: 8px 0; max-width: 420px; }
   .bidgrid button, .bidextra button {
     padding: 8px 0; border-radius: 6px; border: 1px solid #b9b5a6; background: var(--paper);
     color: var(--ink); font-family: var(--serif); font-weight: 700; font-size: 16px;
@@ -144,73 +195,96 @@
   .bidgrid button:disabled, .bidextra button:disabled { opacity: .3; cursor: default; }
   .bidextra { display: flex; gap: 6px; }
   .bidextra button { padding: 8px 18px; }
+  .alertbox { max-width: 420px; }
+  .alertbox label { display: block; color: var(--muted); font-size: 13px; margin-bottom: 3px; }
+  details.claim { margin-top: 10px; }
+  details.claim summary { cursor: pointer; color: var(--accent-text); }
+  details.claim .inner { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
+  details.claim input { width: 70px; }
   .red { color: var(--red); }
+  .dark .red, #bids .red { color: var(--redlight); }
 
-  #bids table { border-collapse: collapse; margin: 0 auto; min-width: 280px; }
+  #bids table, #score table { border-collapse: collapse; }
+  #bids table { margin: 0 auto; min-width: 280px; }
   #bids th, #bids td { padding: 4px 12px; text-align: center; font-family: var(--serif); }
-  #bids th { color: var(--mist); font-weight: 400; border-bottom: 1px solid rgba(255,255,255,.2); }
-  #bids td .red { color: #ff9a9f; }
+  #bids th { color: var(--muted); font-weight: 400; border-bottom: 1px solid var(--line); }
+  #bids .alert { color: var(--accent-text); cursor: help; font-weight: 700; }
+  #bids .alerts { margin: 8px auto 0; max-width: 420px; color: var(--muted); font-size: 13px; }
 
-
-  #score { margin-top: 18px; padding: 14px; background: rgba(0,0,0,.22); border-radius: 12px; }
-  #score h3 { font-family: var(--serif); font-weight: 600; font-size: 18px; margin: 0 0 8px; }
-  #score table { border-collapse: collapse; width: 100%; max-width: 460px; }
+  #score table { width: 100%; max-width: 480px; }
   #score th, #score td { padding: 5px 8px; text-align: right; }
-  #score th:first-child, #score td:first-child { text-align: left; color: var(--mist); font-weight: 400; }
-  #score thead th { border-bottom: 1px solid rgba(255,255,255,.2); font-family: var(--serif); font-weight: 600; }
-  #score tr.total td { border-top: 1px solid rgba(255,255,255,.2); font-family: var(--serif); font-size: 18px; font-weight: 700; color: #fff; }
-  #score .vul { color: var(--brass); }
-  #score ul { margin: 12px 0 0; padding-left: 18px; color: var(--mist); }
-  #score li { margin: 2px 0; }
-  .breakdown { margin: 0 0 10px; padding: 0; list-style: none; }
-  .breakdown li { display: flex; justify-content: space-between; gap: 16px; max-width: 460px; padding: 2px 0; }
-  #actions .note { color: var(--brass); }
+  #score th:first-child, #score td:first-child { text-align: left; color: var(--muted); font-weight: 400; }
+  #score thead th { border-bottom: 1px solid var(--line); font-family: var(--serif); font-weight: 600; }
+  #score tr.total td { border-top: 1px solid var(--line); font-family: var(--serif); font-size: 18px; font-weight: 700; color: var(--text); }
+  #score .vul { color: var(--accent-text); }
+  #score ul { margin: 10px 0 0; padding-left: 18px; color: var(--muted); }
 
+  /* Settings, people, chat */
+  .setgrid { display: grid; gap: 12px; max-width: 520px; }
+  .setgrid fieldset { border: 1px solid var(--line); border-radius: 8px; margin: 0; padding: 8px 12px 10px; }
+  .setgrid legend { color: var(--muted); padding: 0 6px; }
+  .setgrid label { display: block; margin: 4px 0; }
+  .hint { color: var(--muted); font-size: 13px; margin: 4px 0 0; }
+  .people-list { list-style: none; margin: 0; padding: 0; }
+  .people-list li { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-top: 1px solid var(--line); flex-wrap: wrap; }
+  .people-list li:first-child { border-top: 0; }
+  .people-list .av { font-size: 22px; }
+  .people-list .tags { color: var(--muted); font-size: 13px; flex: 1; min-width: 120px; }
+  details.collapsible > summary { cursor: pointer; font-family: var(--serif); font-size: 18px; }
+  #chatLog { list-style: none; margin: 8px 0; padding: 0; max-height: 170px; overflow-y: auto; }
+  #chatLog li { padding: 2px 0; overflow-wrap: anywhere; }
+  #chatLog .who { color: var(--accent-text); font-weight: 600; }
+  .reacts { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px; }
+  .reacts button { font-size: 20px; padding: 2px 8px; border-radius: 99px; border: 1px solid var(--line); background: transparent; }
+  .chatrow { display: flex; gap: 8px; }
+  .chatrow input { flex: 1; }
 
-  .avatars { display: flex; flex-wrap: wrap; gap: 6px; }
-  .avatars button {
-    width: 44px; height: 44px; border-radius: 50%; font-size: 24px; line-height: 1;
-    background: rgba(0,0,0,.28); border: 2px solid transparent; color: inherit; padding: 0;
-  }
-  .avatars button[aria-checked="true"] { border-color: var(--brass); background: rgba(227,191,99,.2); }
-  .avatar-picker { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; padding: 10px 12px; background: rgba(0,0,0,.22); border-radius: 12px; color: var(--mist); }
-  .avatar {
-    width: 50px; height: 50px; margin: 0 auto 4px; padding: 0; border-radius: 50%;
-    display: grid; place-items: center; font-size: 28px; line-height: 1; color: inherit;
-    background: rgba(0,0,0,.28); border: 2px solid rgba(255,255,255,.22);
-  }
-  .avatar.empty { border-style: dashed; color: var(--mist); font-size: 20px; }
-  .avatar.off { opacity: .45; }
-  button.avatar { cursor: pointer; }
-  .seat.turn .avatar { border-color: var(--brass); }
+  dialog { background: var(--solid); color: var(--text); border: 1px solid var(--line); border-radius: 12px; width: min(720px, 94vw); max-height: 86vh; padding: 16px; }
+  dialog::backdrop { background: rgba(0,0,0,.55); }
+  dialog .dhead { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  dialog details { border-top: 1px solid var(--line); padding: 8px 0; }
+  dialog summary { cursor: pointer; }
+  dialog .hands div { margin: 2px 0; font-family: var(--serif); }
+  dialog ol { margin: 6px 0; padding-left: 22px; font-family: var(--serif); }
+  dialog .red { color: var(--red); }
 
   #toast {
     position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%);
     background: #fff; color: #7a1117; padding: 10px 16px; border-radius: 8px;
-    box-shadow: 0 4px 14px rgba(0,0,0,.4); max-width: 90vw; z-index: 10;
+    box-shadow: 0 4px 14px rgba(0,0,0,.4); max-width: 90vw; z-index: 20;
   }
+  #toast.info { color: #14342a; }
 
   @media (max-width: 680px) {
-    #table { grid-template-columns: minmax(0,1fr) minmax(0,1fr); grid-template-areas: "top top" "left right" "mid mid" "bottom bottom"; padding: 8px; }
+    #game { padding: 8px 8px 40px; }
+    #table { grid-template-columns: minmax(0,1fr) minmax(0,1fr); grid-template-areas: "top top" "left right" "mid mid" "bottom bottom"; padding: 8px; gap: 6px; }
     .card.sm { width: 28px; height: 40px; font-size: 12px; }
     .card.sm .s { font-size: 14px; }
     .suitrow .card { margin-left: -12px; }
+    .myhand .card { margin-left: -14px; width: 38px; height: 56px; }
+    .avatar { width: 42px; height: 42px; font-size: 23px; }
+    .seat .who { font-size: 15px; }
+    .bidgrid { max-width: none; }
+    .bidgrid button { padding: 10px 0; }
+    #entry h1 { font-size: 36px; }
   }
-  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
-  button.card { transition: transform .12s; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
 </style>
 </head>
 <body>
 
 <section id="entry">
+  <button class="btn quiet small" id="themeBtn2" type="button">Light mode</button>
   <h1>Bridge with friends</h1>
   <p>Open a table, send the link, and play from your own homes.</p>
-  <label class="field"><span>Your name</span><input id="name" maxlength="20" autocomplete="nickname"></label>
+  <label class="field"><span>Your name</span><input type="text" id="name" maxlength="20" autocomplete="nickname"></label>
   <div class="field"><span id="avlabel">Your avatar</span><div class="avatars" id="entryAvatars" role="radiogroup" aria-labelledby="avlabel"></div></div>
   <button class="btn" id="create" style="width:100%">Open a new table</button>
   <div class="or">Or join a friend's table</div>
   <div class="row">
-    <input id="code" maxlength="4" placeholder="Table code" aria-label="Table code" style="text-transform:uppercase">
+    <input type="text" id="code" maxlength="4" placeholder="Table code" aria-label="Table code" style="text-transform:uppercase">
     <button class="btn quiet" id="join">Join</button>
   </div>
 </section>
@@ -219,25 +293,51 @@
   <div class="topbar">
     <h2>Table <span class="code" id="tcode"></span></h2>
     <div class="tools">
-      <button class="btn quiet small" id="copy">Copy invite link</button>
-      <button class="btn quiet small" id="leave">Leave table</button>
+      <button class="btn quiet small" id="copy" type="button">Copy invite link</button>
+      <button class="btn quiet small" id="histBtn" type="button">Hands played</button>
+      <button class="btn quiet small" id="soundBtn" type="button">Sound on</button>
+      <button class="btn quiet small" id="themeBtn" type="button">Light mode</button>
+      <button class="btn quiet small" id="leave" type="button">Leave table</button>
     </div>
   </div>
-  <div id="avatarPicker" class="avatar-picker" hidden>
-    <span>Choose your avatar</span><div class="avatars" id="gameAvatars"></div>
+  <div id="avatarPicker" class="panel avatar-picker" hidden>
+    <span>Choose your avatar</span><div class="avatars" id="gameAvatars" role="radiogroup" aria-label="Avatar"></div>
   </div>
+  <div id="settings" class="panel" hidden></div>
   <div id="table">
     <div class="seat pos-top" id="p-top"></div>
     <div class="seat pos-left" id="p-left"></div>
-    <div id="mid"><div><div id="trick"></div><div id="midnote"></div></div></div>
+    <div id="mid"><div id="midwrap">
+      <div id="trick"></div><div id="midnote"></div>
+      <button class="btn quiet small" id="lastBtn" type="button" hidden>Last trick</button>
+      <div id="lastTrick"></div>
+    </div></div>
     <div class="seat pos-right" id="p-right"></div>
     <div class="seat pos-bottom" id="p-bottom"></div>
   </div>
   <div id="info"></div>
   <div id="actions"></div>
   <div id="bids"></div>
-  <div id="score"></div>
+  <div id="score" class="panel" hidden></div>
+  <details class="panel collapsible" id="peopleBox" open>
+    <summary>People at the table</summary>
+    <div id="peopleList"></div>
+  </details>
+  <div class="panel" id="chatBox">
+    <h3>Chat</h3>
+    <ul id="chatLog" aria-live="polite"></ul>
+    <div class="reacts" id="reacts"></div>
+    <div class="chatrow">
+      <input type="text" id="chatInput" maxlength="200" placeholder="Say something" aria-label="Chat message" autocomplete="off">
+      <button class="btn" id="chatSend" type="button">Send</button>
+    </div>
+  </div>
 </section>
+
+<dialog id="histDlg" aria-labelledby="histTitle">
+  <div class="dhead"><h3 id="histTitle">Hands played</h3><button class="btn quiet small" id="histClose" type="button">Close</button></div>
+  <div id="histBody"></div>
+</dialog>
 
 <div id="toast" hidden role="status"></div>
 
@@ -250,7 +350,12 @@ const SUIT_ORDER = ["S", "H", "C", "D"];
 const RANKS = "23456789TJQKA";
 const PAIRS = { NS: "North-South", EW: "East-West" };
 const PLACES = ["bottom", "left", "top", "right"]; // clockwise, starting from you
+const AVATARS = ["🦊", "🐻", "🐼", "🦉", "🐙", "🦁", "🐸", "🐧", "🦄", "🐯", "🐨", "🦋"];
+const REACTIONS = ["👍", "😂", "😮", "👏", "🤔", "😬"];
+const BASE_TITLE = "Bridge with friends";
+const side = (s) => (s === "N" || s === "S" ? "NS" : "EW");
 
+// ---------- Identity and preferences ----------
 // A random ID kept in this browser. It is what lets you reconnect to your seat.
 let pid = localStorage.getItem("bridgePid");
 if (!pid) {
@@ -259,6 +364,18 @@ if (!pid) {
 }
 const socket = io({ auth: { playerId: pid } });
 let view = null;
+let showLast = false;
+let alertText = "";
+let soundOn = localStorage.getItem("bridgeSound") !== "off";
+let shownTrick = new Set();
+let lastDealKey = "";
+let lastActionsKey = "";
+let lastSettingsKey = "";
+let lastChatKey = "";
+let lastTurnKey = "";
+let iAmUp = false;
+let titleTimer = null;
+let audioCtx = null;
 
 const $ = (id) => document.getElementById(id);
 function el(tag, cls, text) {
@@ -267,7 +384,66 @@ function el(tag, cls, text) {
   if (text != null) e.textContent = text;
   return e;
 }
-const AVATARS = ["🦊", "🐻", "🐼", "🦉", "🐙", "🦁", "🐸", "🐧", "🦄", "🐯", "🐨", "🦋"];
+let toastTimer;
+function toast(msg, info) {
+  const t = $("toast");
+  t.textContent = msg;
+  t.className = info ? "info" : "";
+  t.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => (t.hidden = true), 3200);
+}
+function send(event, data, done) {
+  socket.emit(event, data || {}, (res) => {
+    if (res && res.error) toast(res.error);
+    if (done) done(res);
+  });
+}
+
+// ---------- Theme and sound ----------
+function applyTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+  localStorage.setItem("bridgeTheme", theme);
+  const label = theme === "light" ? "Dark mode" : "Light mode";
+  $("themeBtn").textContent = label;
+  $("themeBtn2").textContent = label;
+}
+function toggleTheme() {
+  applyTheme(document.documentElement.dataset.theme === "light" ? "dark" : "light");
+}
+applyTheme(localStorage.getItem("bridgeTheme") === "light" ? "light" : "dark");
+$("themeBtn").onclick = toggleTheme;
+$("themeBtn2").onclick = toggleTheme;
+
+function paintSound() { $("soundBtn").textContent = soundOn ? "Sound on" : "Sound off"; }
+$("soundBtn").onclick = () => {
+  soundOn = !soundOn;
+  localStorage.setItem("bridgeSound", soundOn ? "on" : "off");
+  paintSound();
+  if (soundOn) beep();
+};
+paintSound();
+
+function beep() {
+  if (!soundOn) return;
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const t = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = "sine";
+    osc.frequency.value = 660;
+    gain.gain.setValueAtTime(0.0001, t);
+    gain.gain.exponentialRampToValueAtTime(0.08, t + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.35);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(t);
+    osc.stop(t + 0.4);
+  } catch (err) { /* sound is a nicety, never block play */ }
+}
+
+// ---------- Avatars ----------
 let myAvatar = localStorage.getItem("bridgeAvatar");
 if (!AVATARS.includes(myAvatar)) myAvatar = AVATARS[Math.floor(Math.random() * AVATARS.length)];
 
@@ -283,25 +459,12 @@ function buildAvatarPicker(container, onPick) {
     container.append(b);
   }
 }
-
-let toastTimer;
-function toast(msg) {
-  const t = $("toast");
-  t.textContent = msg; t.hidden = false;
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => (t.hidden = true), 3200);
-}
-function send(event, data) {
-  socket.emit(event, data || {}, (res) => { if (res && res.error) toast(res.error); });
-}
+function refreshEntryPicker() { buildAvatarPicker($("entryAvatars"), refreshEntryPicker); }
+refreshEntryPicker();
 
 // ---------- Entry ----------
 const urlRoom = (new URLSearchParams(location.search).get("room") || "").toUpperCase();
 $("name").value = localStorage.getItem("bridgeName") || "";
-function refreshEntryPicker() {
-  buildAvatarPicker($("entryAvatars"), refreshEntryPicker);
-}
-refreshEntryPicker();
 $("code").value = urlRoom;
 
 function enter(event, code) {
@@ -338,17 +501,27 @@ $("leave").onclick = () => {
 };
 $("copy").onclick = async () => {
   const link = location.origin + "/?room=" + view.code;
-  try { await navigator.clipboard.writeText(link); toast("Invite link copied"); }
-  catch { prompt("Copy this invite link:", link); }
+  try { await navigator.clipboard.writeText(link); toast("Invite link copied", true); }
+  catch (err) { prompt("Copy this invite link:", link); }
 };
+socket.on("kicked", () => {
+  toast("The host removed you from this table.");
+  localStorage.removeItem("bridgeRoom");
+  setTimeout(() => (location.href = location.pathname), 1800);
+});
+socket.on("reaction", ({ seat, name, emoji }) => {
+  const av = seat ? document.querySelector('.avatar[data-seat="' + seat + '"]') : null;
+  if (av && av.parentElement) {
+    const f = el("span", "floater", emoji);
+    av.parentElement.append(f);
+    setTimeout(() => f.remove(), 2000);
+  } else toast(name + " " + emoji, true);
+});
 
-// ---------- Rendering ----------
+// ---------- Card and bid pieces ----------
 socket.on("state", (v) => { view = v; render(); });
 
-function suitSpan(suit) {
-  const s = el("span", suit === "H" || suit === "D" ? "red" : "", SYM[suit]);
-  return s;
-}
+function suitSpan(suit) { return el("span", suit === "H" || suit === "D" ? "red" : "", SYM[suit]); }
 function callNode(call) {
   const w = el("span");
   if (call === "P") w.textContent = "Pass";
@@ -356,13 +529,17 @@ function callNode(call) {
   else { w.append(call[0]); w.append(suitSpan(call.slice(1))); }
   return w;
 }
+const rankText = (c) => (c[0] === "T" ? "10" : c[0]);
 function cardNode(code, opts = {}) {
   const suit = code[1];
   const playable = opts.playable;
-  const n = el(playable !== undefined ? "button" : "div", "card" + (opts.sm ? " sm" : "") + (suit === "H" || suit === "D" ? " red" : ""));
-  n.append(el("span", "r", code[0] === "T" ? "10" : code[0]), el("span", "s", SYM[suit]));
-  n.setAttribute("aria-label", (code[0] === "T" ? "10" : code[0]) + " of " + SYM[suit]);
+  const n = el(playable !== undefined ? "button" : "div",
+    "card" + (opts.size ? " " + opts.size : "") + (suit === "H" || suit === "D" ? " red" : "") + (opts.fresh ? " fresh-" + opts.fresh : ""));
+  n.append(el("span", "r", rankText(code)), el("span", "s", SYM[suit]));
+  n.setAttribute("aria-label", rankText(code) + " of " + SYM[suit]);
+  if (opts.i !== undefined) n.style.setProperty("--i", opts.i);
   if (playable !== undefined) {
+    n.type = "button";
     n.disabled = !playable;
     if (playable) { n.classList.add("playable"); n.onclick = () => send("play", { card: code }); }
     else if (opts.dim) n.classList.add("dim");
@@ -375,9 +552,15 @@ function sortedCards(hand) {
     return d || RANKS.indexOf(b[0]) - RANKS.indexOf(a[0]);
   });
 }
-function handRow(hand, seat) {
-  const wrap = el("div", "myhand");
-  for (const c of sortedCards(hand)) wrap.append(cardNode(c, cardOpts(c, seat, false)));
+function cardOpts(card, seat, size) {
+  const mine = view.phase === "playing" && view.yourTurn && view.actingSeat === seat;
+  if (!mine) return { size };
+  const ok = view.legal.includes(card);
+  return { size, playable: ok, dim: !ok };
+}
+function handRow(hand, seat, dealAnim) {
+  const wrap = el("div", "myhand" + (dealAnim ? " dealt" : ""));
+  sortedCards(hand).forEach((c, i) => wrap.append(cardNode(c, Object.assign(cardOpts(c, seat, ""), { i }))));
   return wrap;
 }
 function suitRows(hand, seat) {
@@ -386,23 +569,27 @@ function suitRows(hand, seat) {
     const cards = sortedCards(hand).filter((c) => c[1] === s);
     if (!cards.length) continue;
     const row = el("div", "suitrow");
-    cards.forEach((c) => row.append(cardNode(c, cardOpts(c, seat, true))));
+    cards.forEach((c) => row.append(cardNode(c, cardOpts(c, seat, "sm"))));
     wrap.append(row);
   }
   return wrap;
-}
-function cardOpts(card, seat, sm) {
-  const mine = view.phase === "playing" && view.yourTurn && view.actingSeat === seat;
-  if (!mine) return { sm };
-  const ok = view.legal.includes(card);
-  return { sm, playable: ok, dim: !ok };
 }
 function backs(count) {
   const w = el("div", "backs");
   for (let i = 0; i < count; i++) w.append(el("div", "card back"));
   return w;
 }
+function handText(hand) {
+  const w = el("div");
+  for (const s of SUIT_ORDER) {
+    const cards = sortedCards(hand).filter((c) => c[1] === s);
+    const part = el("span", s === "H" || s === "D" ? "red" : "", SYM[s] + " " + (cards.length ? cards.map(rankText).join(" ") : "–") + "   ");
+    w.append(part);
+  }
+  return w;
+}
 
+// ---------- Main render ----------
 function render() {
   $("entry").hidden = true;
   $("game").hidden = false;
@@ -410,12 +597,20 @@ function render() {
   const base = view.you || "S";
   const place = (seat) => PLACES[(SEATS.indexOf(seat) - SEATS.indexOf(base) + 4) % 4];
 
-  for (const seat of SEATS) renderSeat(seat, place(seat));
+  const dealKey = view.phase === "bidding" && view.bids.length === 0 ? view.handNo + "|" + view.hand.join("") : "";
+  const dealAnim = !!dealKey && dealKey !== lastDealKey;
+  for (const seat of SEATS) renderSeat(seat, place(seat), dealAnim);
+  if (dealKey) lastDealKey = dealKey;
+
   renderTrick(place);
   renderInfo();
   renderActions();
   renderBids();
   renderScore();
+  renderSettings();
+  renderPeople();
+  renderChat();
+  turnAlert();
 }
 
 function toggleAvatarPicker() {
@@ -430,13 +625,14 @@ function showGamePicker() {
   });
 }
 
-function renderSeat(seat, pos) {
+function renderSeat(seat, pos, dealAnim) {
   const box = $("p-" + pos);
   box.replaceChildren();
   const info = view.seats[seat];
   box.classList.toggle("turn", view.phase !== "lobby" && view.turn === seat);
 
   const av = el(seat === view.you ? "button" : "div", "avatar" + (info ? "" : " empty") + (info && info.offline ? " off" : ""), info ? info.avatar : "?");
+  av.dataset.seat = seat;
   if (seat === view.you) {
     av.type = "button";
     av.title = "Change your avatar";
@@ -454,41 +650,28 @@ function renderSeat(seat, pos) {
     if (view.dealer === seat) chips.append(el("span", "chip", "Dealer"));
     if (view.contract && view.contract.declarer === seat) chips.append(el("span", "chip gold", "Declarer"));
     if (view.contract && view.contract.dummy === seat) chips.append(el("span", "chip gold", "Dummy"));
+    if (view.vul && view.vul[side(seat)]) chips.append(el("span", "chip", "Vulnerable"));
   }
   if (info && info.offline) chips.append(el("span", "chip", "Offline"));
   box.append(chips);
 
-  // Seat controls before the deal
   const actions = el("div", "seat-actions");
+  const mk = (label, cls, fn) => { const b = el("button", "btn small " + cls, label); b.type = "button"; b.onclick = fn; actions.append(b); };
   if (view.phase === "lobby") {
     if (!info) {
-      const sit = el("button", "btn small", "Sit here");
-      sit.onclick = () => send("sit", { seat });
-      actions.append(sit);
-      if (view.host) {
-        const bot = el("button", "btn quiet small", "Add bot");
-        bot.onclick = () => send("addBot", { seat });
-        actions.append(bot);
-      }
-    } else if (seat === view.you) {
-      const up = el("button", "btn quiet small", "Stand up");
-      up.onclick = () => send("stand");
-      actions.append(up);
-    } else if (info.bot && view.host) {
-      const rm = el("button", "btn quiet small", "Remove bot");
-      rm.onclick = () => send("removeBot", { seat });
-      actions.append(rm);
+      mk("Sit here", "", () => send("sit", { seat }));
+      if (view.host) mk("Add bot", "quiet", () => send("addBot", { seat }));
+    } else if (seat === view.you) mk("Stand up", "quiet", () => send("stand"));
+    else if (info.bot) {
+      if (!view.you) mk("Take this seat", "", () => send("sit", { seat }));
+      if (view.host) mk("Remove bot", "quiet", () => send("removeBot", { seat }));
     }
-  } else if (info && info.offline && view.host) {
-    const rep = el("button", "btn quiet small", "Bot takes over");
-    rep.onclick = () => send("replaceWithBot", { seat });
-    actions.append(rep);
-  }
+  } else if (info && info.bot && !view.you) mk("Take this seat", "", () => send("sit", { seat }));
+  else if (info && info.offline && view.host) mk("Bot takes over", "quiet", () => send("replaceWithBot", { seat }));
   box.append(actions);
 
-  // Cards
   if (view.phase === "lobby") return;
-  if (seat === view.you) box.append(handRow(view.hand, seat));
+  if (seat === view.you) box.append(handRow(view.hand, seat, dealAnim));
   else if (view.reveal) box.append(suitRows(view.reveal[seat], seat));
   else if (view.dummy && view.dummy.seat === seat) box.append(suitRows(view.dummy.hand, seat));
   else box.append(backs(view.counts[seat]));
@@ -499,15 +682,41 @@ function renderTrick(place) {
   t.replaceChildren();
   const note = $("midnote");
   note.textContent = "";
-  if (view.phase === "lobby") { note.textContent = "Waiting to deal"; return; }
+  const lastBtn = $("lastBtn");
+  const lt = $("lastTrick");
+  lt.replaceChildren();
+  lastBtn.hidden = !(view.phase === "playing" && view.lastTrick);
+  lastBtn.textContent = showLast ? "Hide last trick" : "Last trick";
+  lastBtn.onclick = () => { showLast = !showLast; renderTrick(place); };
+  if (view.phase === "lobby") { note.textContent = "Waiting to deal"; shownTrick = new Set(); return; }
+
+  const keys = new Set();
   for (const play of view.trick || []) {
-    const slot = el("div", "slot slot-" + place(play.seat) + (view.trickWinner === play.seat ? " win" : ""));
-    slot.append(cardNode(play.card));
+    const key = play.seat + play.card;
+    keys.add(key);
+    const pos = place(play.seat);
+    const slot = el("div", "slot slot-" + pos + (view.trickWinner === play.seat ? " win" : "") + (view.trickWinner ? " sweep-" + place(view.trickWinner) : ""));
+    slot.append(cardNode(play.card, { fresh: shownTrick.has(key) ? "" : pos }));
     t.append(slot);
   }
+  shownTrick = keys;
   if (view.trickWinner) note.textContent = NAMES[view.trickWinner] + " wins the trick";
+
+  if (showLast && view.lastTrick && view.phase === "playing") {
+    lt.append(el("div", "", "Last trick, won by " + NAMES[view.lastTrick.winner]));
+    const row = el("div", "lt");
+    for (const p of view.lastTrick.cards) {
+      const s = el("span", p.seat === view.lastTrick.winner ? "w" : "");
+      s.append(el("span", "", p.seat), cardNode(p.card, { size: "xs" }));
+      row.append(s);
+    }
+    lt.append(row);
+  }
 }
 
+function vulText(v) {
+  return v.NS && v.EW ? "both sides" : v.NS ? "North-South" : v.EW ? "East-West" : "nobody";
+}
 function renderInfo() {
   const box = $("info");
   box.replaceChildren();
@@ -517,48 +726,67 @@ function renderInfo() {
   if (c) {
     left.append("Contract ");
     const b = el("b");
-    b.append(String(c.level), suitSpan(c.denom === "NT" ? "NT" : c.denom), c.doubled);
+    b.append(String(c.level), suitSpan(c.denom), c.doubled);
     left.append(b, " by " + NAMES[c.declarer]);
-  } else left.append("Bidding. " + NAMES[view.dealer] + " dealt.");
+  } else if (view.phase === "finished") left.append("Passed out");
+  else left.append("Bidding. " + NAMES[view.dealer] + " dealt.");
   box.append(left);
+
+  const mid = el("div", "", (view.settings.mode === "duplicate" ? "Board " + view.dup.board + ". " : "Hand " + view.handNo + ". ") + "Vulnerable: " + vulText(view.vul));
+  box.append(mid);
+
   if (c) {
-    const need = 6 + c.level;
-    const decl = c.declarer === "N" || c.declarer === "S" ? "NS" : "EW";
-    const got = view.tricks[decl];
-    box.append(el("div", "", "Declarer side: " + got + " of " + need + " tricks needed. Defenders: " + view.tricks[decl === "NS" ? "EW" : "NS"]));
+    const decl = side(c.declarer);
+    box.append(el("div", "", "Declarer side: " + view.tricks[decl] + " of " + (6 + c.level) + " tricks needed. Defenders: " + view.tricks[decl === "NS" ? "EW" : "NS"]));
   }
 }
 
+// ---------- Actions area ----------
+function actionsKey() {
+  return JSON.stringify([
+    view.phase, view.turn, view.bids && view.bids.length, view.yourTurn, view.actingSeat, view.trickWinner,
+    view.proposal, view.canPropose, view.remaining, view.result && view.result.text, view.message,
+    view.host, view.you, view.settings.mode, view.rubber.over, view.handNo,
+    SEATS.map((s) => !!view.seats[s]), view.legalBids && view.legalBids.length, view.trick && view.trick.length,
+  ]);
+}
+
 function renderActions() {
+  const key = actionsKey();
+  if (key === lastActionsKey) return;
+  lastActionsKey = key;
   const box = $("actions");
   box.replaceChildren();
-  const msg = (text, big) => box.append(el("p", "msg" + (big ? " big" : ""), text));
-  if (view.message) msg(view.message);
+  const msg = (text, cls) => box.append(el("p", "msg" + (cls ? " " + cls : ""), text));
+  const button = (label, cls, fn, parent) => {
+    const b = el("button", "btn " + (cls || ""), label);
+    b.type = "button"; b.onclick = fn; (parent || box).append(b); return b;
+  };
+  if (view.message) msg(view.message, "note");
 
   if (view.phase === "lobby") {
     const full = SEATS.every((s) => view.seats[s]);
-    if (!view.you) msg("Pick a seat to join the game. You need four players, and bots can fill any empty seat.");
+    if (!view.you) msg("Pick a seat to join the game, or just watch. You need four players, and bots can fill any empty seat.");
     else if (!full) msg("Waiting for all four seats to fill. Share the invite link with your friends.");
-    if (view.host) {
-      const b = el("button", "btn", "Deal the cards");
-      b.disabled = !full;
-      b.onclick = () => send("deal");
-      box.append(b);
-    } else if (full) msg("Waiting for the host to deal.");
+    if (view.host) button("Deal the cards", "", () => send("deal")).disabled = !full;
+    else if (full) msg("Waiting for the host to deal.");
     return;
   }
 
+  if (!view.you) msg("You are watching. You can see the table and the dummy, but never anyone's hidden hand.");
+
   if (view.phase === "bidding") {
     if (view.yourTurn) {
-      msg("Your bid", true);
+      msg("Your bid", "big");
       const grid = el("div", "bidgrid");
       for (let l = 1; l <= 7; l++) {
         for (const d of ["C", "D", "H", "S", "NT"]) {
           const call = l + d;
           const b = el("button");
+          b.type = "button";
           b.append(callNode(call));
           b.disabled = !view.legalBids.includes(call);
-          b.onclick = () => send("bid", { call });
+          b.onclick = () => bid(call);
           grid.append(b);
         }
       }
@@ -566,60 +794,188 @@ function renderActions() {
       const extra = el("div", "bidextra");
       for (const [call, label] of [["P", "Pass"], ["X", "Double"], ["XX", "Redouble"]]) {
         const b = el("button", "", label);
+        b.type = "button";
         b.disabled = !view.legalBids.includes(call);
-        b.onclick = () => send("bid", { call });
+        b.onclick = () => bid(call);
         extra.append(b);
       }
       box.append(extra);
-    } else {
-      msg("Waiting for " + NAMES[view.turn] + " to bid.");
-    }
+      const ab = el("div", "alertbox");
+      ab.style.marginTop = "10px";
+      const lab = el("label", "", "Explain your bid (optional). Your opponents will see it, your partner will not.");
+      lab.htmlFor = "alertInput";
+      const inp = el("input");
+      inp.type = "text"; inp.id = "alertInput"; inp.maxLength = 60; inp.value = alertText;
+      inp.placeholder = "For example: 15 to 17 points";
+      inp.oninput = () => (alertText = inp.value);
+      ab.append(lab, inp);
+      box.append(ab);
+    } else msg("Waiting for " + NAMES[view.turn] + " to bid.");
     return;
   }
 
   if (view.phase === "playing") {
+    if (view.proposal) return renderProposal(box, msg, button);
     if (view.trickWinner) return msg(NAMES[view.trickWinner] + " takes the trick.");
     if (view.yourTurn) {
       const forDummy = view.actingSeat !== view.you;
-      msg(forDummy ? "Your turn. Play a card from the dummy (" + NAMES[view.actingSeat] + ")." : "Your turn. Play a card.", true);
-    } else if (view.you && view.contract.dummy === view.you) {
-      msg("You are the dummy. Your partner plays your cards.");
-    } else msg("Waiting for " + NAMES[view.turn] + " to play.");
+      msg(forDummy ? "Your turn. Play a card from the dummy (" + NAMES[view.actingSeat] + ")." : "Your turn. Play a card.", "big");
+    } else if (view.you && view.contract.dummy === view.you) msg("You are the dummy. Your partner plays your cards.");
+    else if (view.turn) msg("Waiting for " + NAMES[view.turn] + " to play.");
+    if (view.canPropose) {
+      const d = el("details", "claim");
+      d.append(el("summary", "", "Claim or concede"));
+      const inner = el("div", "inner");
+      if (view.you === view.contract.declarer) {
+        inner.append(el("span", "", "I take"));
+        const num = el("input");
+        num.type = "number"; num.min = "1"; num.max = String(view.remaining); num.value = String(view.remaining);
+        num.setAttribute("aria-label", "Tricks you claim");
+        inner.append(num, el("span", "", "of the remaining " + view.remaining));
+        button("Claim", "small", () => send("claim", { tricks: Number(num.value) }), inner);
+        button("Concede the rest", "quiet small", () => send("concede"), inner);
+      } else {
+        inner.append(el("span", "", "Give the remaining " + view.remaining + " tricks to the declarer. Your partner must agree."));
+        button("Concede", "quiet small", () => send("concede"), inner);
+      }
+      d.append(inner);
+      box.append(d);
+    }
     return;
   }
 
-  if (view.phase === "finished") {
-    msg(view.result.text, true);
-    const sc = view.result.score;
-    const list = el("ul", "breakdown");
-    for (const it of sc.items) {
-      const li = el("li");
-      li.append(el("span", "", PAIRS[it.side] + ": " + it.label + (it.line === "below" ? " (below the line)" : "")));
-      li.append(el("span", "", "+" + it.pts));
-      list.append(li);
+  if (view.phase === "finished") renderFinished(box, msg, button);
+}
+
+function bid(call) {
+  const note = alertText;
+  alertText = "";
+  send("bid", { call, alert: note });
+}
+
+function renderProposal(box, msg, button) {
+  const p = view.proposal;
+  const names = p.needs.map((s) => NAMES[s]).join(" and ");
+  msg(p.type === "claim"
+    ? NAMES[p.by] + " claims " + p.tricks + " of the remaining " + view.remaining + " tricks."
+    : NAMES[p.by] + " offers to give up the remaining " + view.remaining + " tricks.", "big");
+  if (p.youNeed) {
+    const row = el("div", "btnrow");
+    button("Accept", "", () => send("respond", { accept: true }), row);
+    button("Play it out", "quiet", () => send("respond", { accept: false }), row);
+    box.append(row);
+  } else if (p.by === view.you) {
+    msg("Waiting for " + names + " to answer.");
+    const row = el("div", "btnrow");
+    button("Withdraw", "quiet small", () => send("withdraw"), row);
+    box.append(row);
+  } else msg("Waiting for " + names + " to answer.");
+}
+
+function renderFinished(box, msg, button) {
+  const r = view.result;
+  msg(r.text, "big");
+  if (r.claimed) msg("Settled by agreement with " + r.claimed.remaining + " tricks left.");
+  const sc = r.score;
+  const list = el("ul", "breakdown");
+  for (const it of sc.items) {
+    const li = el("li");
+    li.append(el("span", "", PAIRS[it.side] + ": " + it.label + (it.line === "below" ? " (below the line)" : "")));
+    li.append(el("span", "", "+" + it.pts));
+    list.append(li);
+  }
+  if (!sc.items.length) list.append(el("li", "", r.passedOut ? "Nobody bid, so there is no score." : "No points scored this hand."));
+  box.append(list);
+  if (view.settings.mode === "duplicate") {
+    if (!r.passedOut) msg("Board result: " + (sc.ns >= 0 ? PAIRS.NS : PAIRS.EW) + " " + Math.abs(sc.ns), "note");
+  } else {
+    if (sc.gameWon) msg(PAIRS[sc.gameWon] + " won a game.", "note");
+    if (sc.rubberBonus) msg(PAIRS[sc.rubberBonus.side] + " won the rubber with a bonus of " + sc.rubberBonus.pts + ".", "note");
+  }
+  if (view.host) {
+    const row = el("div", "btnrow");
+    const label = view.settings.mode === "duplicate" ? "Deal the next board" : view.rubber.over ? "Start a new rubber" : "Deal the next hand";
+    button(label, "", () => send("deal"), row);
+    button("Back to the lobby", "quiet", () => send("toLobby"), row);
+    box.append(row);
+  } else msg("Waiting for the host to deal the next hand.");
+}
+
+// ---------- Bidding history ----------
+function renderBids() {
+  const box = $("bids");
+  box.replaceChildren();
+  if (view.phase === "lobby" || !view.bids || !view.bids.length) return;
+  const table = el("table");
+  const head = el("tr");
+  SEATS.forEach((s) => head.append(el("th", "", NAMES[s])));
+  table.append(head);
+  const cells = Array(SEATS.indexOf(view.dealer)).fill(null).concat(view.bids);
+  const alerts = [];
+  for (let i = 0; i < cells.length; i += 4) {
+    const tr = el("tr");
+    for (let j = 0; j < 4; j++) {
+      const td = el("td");
+      const b = cells[i + j];
+      if (b) {
+        td.append(callNode(b.call));
+        if (b.alert) {
+          const mark = el("span", "alert", " !");
+          mark.title = b.alert;
+          td.append(mark);
+          alerts.push(b);
+        }
+      }
+      tr.append(td);
     }
-    if (!sc.items.length) list.append(el("li", "", "No points scored this hand."));
+    table.append(tr);
+  }
+  box.append(table);
+  if (alerts.length) {
+    const list = el("div", "alerts");
+    for (const a of alerts) {
+      const line = el("div");
+      line.append(NAMES[a.seat] + " bid ", callNode(a.call), ": " + a.alert);
+      list.append(line);
+    }
     box.append(list);
-    if (sc.gameWon) box.append(el("p", "msg note", PAIRS[sc.gameWon] + " won a game."));
-    if (sc.rubberBonus) box.append(el("p", "msg note", PAIRS[sc.rubberBonus.side] + " won the rubber with a bonus of " + sc.rubberBonus.pts + "."));
-    if (view.host) {
-      const b = el("button", "btn", view.rubber.over ? "Start a new rubber" : "Deal the next hand");
-      b.onclick = () => send("deal");
-      box.append(b);
-    } else msg(view.rubber.over ? "Waiting for the host to start a new rubber." : "Waiting for the host to deal the next hand.");
   }
 }
 
+// ---------- Scoreboard ----------
 function renderScore() {
   const box = $("score");
   box.replaceChildren();
+  const dup = view.settings.mode === "duplicate";
   const r = view.rubber;
-  if (view.phase === "lobby" && !r.log.length) return;
+  box.hidden = view.phase === "lobby" && !(dup ? view.dup.results.length : r.log.length);
+  if (box.hidden) return;
+
+  if (dup) {
+    box.append(el("h3", "", "Duplicate, deal set " + view.dup.set));
+    const table = el("table");
+    const thead = el("thead"); const hr = el("tr");
+    ["Board", "Result", "N-S score", "N-S %"].forEach((h, i) => { const th = el("th", "", h); if (i === 1) th.style.textAlign = "left"; hr.append(th); });
+    thead.append(hr); table.append(thead);
+    for (const x of view.dup.results) {
+      const tr = el("tr");
+      const res = el("td", "", x.text); res.style.textAlign = "left"; res.style.color = "inherit";
+      tr.append(el("td", "", String(x.board)), res, el("td", "", (x.ns > 0 ? "+" : "") + x.ns), el("td", "", x.nsPct === null ? "–" : x.nsPct + "%"));
+      table.append(tr);
+    }
+    box.append(table);
+    const sum = view.dup.compared
+      ? "Average over " + view.dup.compared + " compared board" + (view.dup.compared > 1 ? "s" : "") + ": North-South " + view.dup.nsAvg + "%, East-West " + view.dup.ewAvg + "%."
+      : "No other table has played these boards yet. Friends at another table can use the deal set code " + view.dup.set + " to get the same deals, and percentages will appear here.";
+    box.append(el("p", "hint", sum));
+    return;
+  }
+
   box.append(el("h3", "", "Rubber " + r.no));
   const table = el("table");
-  const head = el("tr");
+  const thead = el("thead"); const head = el("tr");
   head.append(el("th"), el("th", "", PAIRS.NS), el("th", "", PAIRS.EW));
-  const thead = el("thead"); thead.append(head); table.append(thead);
+  thead.append(head); table.append(thead);
   const row = (label, a, b, cls) => {
     const tr = el("tr", cls || "");
     tr.append(el("td", "", label), el("td", "", String(a)), el("td", "", String(b)));
@@ -636,7 +992,7 @@ function renderScore() {
   table.append(vtr);
   box.append(table);
   if (r.log.length) {
-    box.append(el("p", "", "Hands this rubber"));
+    box.append(el("p", "hint", "Hands this rubber"));
     const ul = el("ul");
     for (const h of r.log) {
       const pts = [h.NS ? PAIRS.NS + " +" + h.NS : "", h.EW ? PAIRS.EW + " +" + h.EW : ""].filter(Boolean).join(", ");
@@ -646,26 +1002,171 @@ function renderScore() {
   }
 }
 
-function renderBids() {
-  const box = $("bids");
+// ---------- Table settings ----------
+function renderSettings() {
+  const box = $("settings");
+  box.hidden = view.phase !== "lobby";
+  if (box.hidden) { lastSettingsKey = ""; return; }
+  const s = view.settings;
+  const key = JSON.stringify([s, view.host]);
+  if (key === lastSettingsKey) return;
+  lastSettingsKey = key;
   box.replaceChildren();
-  if (view.phase === "lobby" || !view.bids || !view.bids.length) return;
-  const table = el("table");
-  const head = el("tr");
-  SEATS.forEach((s) => head.append(el("th", "", NAMES[s])));
-  table.append(head);
-  const cells = Array(SEATS.indexOf(view.dealer)).fill(null).concat(view.bids);
-  for (let i = 0; i < cells.length; i += 4) {
-    const tr = el("tr");
-    for (let j = 0; j < 4; j++) {
-      const td = el("td");
-      const b = cells[i + j];
-      if (b) td.append(callNode(b.call));
-      tr.append(td);
-    }
-    table.append(tr);
+  box.append(el("h3", "", "Table settings"));
+  const modeText = s.mode === "duplicate" ? "Duplicate: boards are dealt from a set code, and tables with the same code get the same deals." : "Rubber: first side to win two games.";
+  if (!view.host) {
+    box.append(el("p", "", modeText));
+    box.append(el("p", "", "Bots play " + (s.bots === "smart" ? "sensibly" : "easy (they always pass and play random cards)") + (s.honors && s.mode === "rubber" ? ". Honors bonuses are on." : ".")));
+    return;
   }
-  box.append(table);
+  const grid = el("div", "setgrid");
+  const fs = (legend) => { const f = el("fieldset"); f.append(el("legend", "", legend)); grid.append(f); return f; };
+  const radio = (parent, name, value, label, checked, fn) => {
+    const l = el("label"); const i = el("input"); i.type = "radio"; i.name = name; i.value = value; i.checked = checked;
+    i.onchange = fn; l.append(i, " " + label); parent.append(l);
+  };
+
+  const f1 = fs("Scoring");
+  radio(f1, "mode", "rubber", "Rubber bridge", s.mode === "rubber", () => send("setSettings", { mode: "rubber" }));
+  radio(f1, "mode", "duplicate", "Duplicate (same deals as other tables, compare scores)", s.mode === "duplicate", () => send("setSettings", { mode: "duplicate" }));
+  if (s.mode === "rubber") {
+    const l = el("label"); const c = el("input"); c.type = "checkbox"; c.checked = s.honors;
+    c.onchange = () => send("setSettings", { honors: c.checked });
+    l.append(c, " Score honors bonuses (100 or 150 for top trumps, 150 for four aces)");
+    f1.append(l);
+  } else {
+    const l = el("label", "", "Deal set code");
+    const inp = el("input"); inp.type = "text"; inp.maxLength = 8; inp.value = s.set;
+    inp.style.marginTop = "4px";
+    inp.onchange = () => send("setSettings", { set: inp.value });
+    l.append(inp);
+    f1.append(l);
+    f1.append(el("p", "hint", "Give friends at another table the same code, and you will see how your scores compare."));
+  }
+  const f2 = fs("Bots");
+  radio(f2, "bots", "smart", "Sensible: bid by strength and play with some skill", s.bots === "smart", () => send("setSettings", { bots: "smart" }));
+  radio(f2, "bots", "easy", "Easy: always pass and play random cards", s.bots === "easy", () => send("setSettings", { bots: "easy" }));
+  box.append(grid);
+}
+
+// ---------- People ----------
+function renderPeople() {
+  const box = $("peopleList");
+  box.replaceChildren();
+  const ul = el("ul", "people-list");
+  for (const p of view.people) {
+    const li = el("li");
+    li.append(el("span", "av", p.avatar));
+    const tags = [p.name + (p.you ? " (you)" : ""), p.seat ? "sits " + NAMES[p.seat] : "watching", p.host ? "host" : "", p.offline ? "offline" : ""].filter(Boolean);
+    li.append(el("span", "tags", tags.join(", ")));
+    if (view.host && !p.you) {
+      const mk = (label, fn) => { const b = el("button", "btn quiet small", label); b.type = "button"; b.onclick = fn; li.append(b); };
+      mk("Make host", () => send("setHost", { mid: p.mid }));
+      mk("Remove", () => { if (confirm("Remove " + p.name + " from the table?")) send("kick", { mid: p.mid }); });
+    }
+    ul.append(li);
+  }
+  box.append(ul);
+  if (!view.host && view.hostOffline) {
+    const b = el("button", "btn small", "Take over as host");
+    b.type = "button"; b.style.marginTop = "8px";
+    b.onclick = () => send("takeHost");
+    box.append(b);
+  }
+}
+
+// ---------- Chat and reactions ----------
+for (const e of REACTIONS) {
+  const b = el("button", "", e);
+  b.type = "button";
+  b.setAttribute("aria-label", "React " + e);
+  b.onclick = () => send("react", { emoji: e });
+  $("reacts").append(b);
+}
+function sendChat() {
+  const inp = $("chatInput");
+  const text = inp.value.trim();
+  if (!text) return;
+  inp.value = "";
+  send("chat", { text });
+}
+$("chatSend").onclick = sendChat;
+$("chatInput").onkeydown = (e) => { if (e.key === "Enter") sendChat(); };
+
+function renderChat() {
+  const last = view.chat[view.chat.length - 1];
+  const key = view.chat.length + "|" + (last ? last.t : "");
+  if (key === lastChatKey) return;
+  lastChatKey = key;
+  const log = $("chatLog");
+  log.replaceChildren();
+  for (const m of view.chat) {
+    const li = el("li");
+    li.append(el("span", "who", m.avatar + " " + m.name + ": "), m.text);
+    log.append(li);
+  }
+  log.scrollTop = log.scrollHeight;
+}
+
+// ---------- Your-turn alert ----------
+function turnAlert() {
+  const mine = !!view.yourTurn && !view.trickWinner && (view.phase === "bidding" || view.phase === "playing");
+  const key = mine ? [view.handNo, view.phase, view.bids.length, view.trick.length, view.remaining, view.actingSeat].join("|") : "";
+  if (mine && key !== lastTurnKey) beep();
+  lastTurnKey = key;
+  iAmUp = mine;
+  paintTitle();
+}
+function paintTitle() {
+  clearInterval(titleTimer);
+  const alertTitle = "▶ Your turn - " + BASE_TITLE;
+  if (!iAmUp) { document.title = BASE_TITLE; return; }
+  document.title = alertTitle;
+  if (document.hidden) {
+    let on = false;
+    titleTimer = setInterval(() => { on = !on; document.title = on ? BASE_TITLE : alertTitle; }, 1000);
+  }
+}
+document.addEventListener("visibilitychange", paintTitle);
+
+// ---------- Hand history ----------
+$("histClose").onclick = () => $("histDlg").close();
+$("histBtn").onclick = () => {
+  send("getHistory", {}, (res) => {
+    if (!res || !res.ok) return;
+    const body = $("histBody");
+    body.replaceChildren();
+    if (!res.history.length) body.append(el("p", "", "No hands have been finished yet."));
+    res.history.slice().reverse().forEach((h) => body.append(historyEntry(h)));
+    if (!$("histDlg").open) $("histDlg").showModal();
+  });
+};
+function historyEntry(h) {
+  const d = el("details");
+  d.append(el("summary", "", (h.board ? "Board " + h.board : "Hand " + h.n) + ": " + h.result));
+  const hands = el("div", "hands");
+  for (const s of SEATS) {
+    const line = el("div");
+    line.append(el("b", "", NAMES[s] + "  "), handText(h.hands[s]));
+    hands.append(line);
+  }
+  d.append(hands);
+  const bids = el("p");
+  bids.append("Bidding (" + NAMES[h.dealer] + " dealt): ");
+  h.bids.forEach((b) => { bids.append(callNode(b.call)); if (b.alert) bids.append(" (" + b.alert + ")"); bids.append(", "); });
+  d.append(bids);
+  if (h.tricks.length) {
+    const ol = el("ol");
+    for (const t of h.tricks) {
+      const li = el("li");
+      t.plays.forEach((p) => { li.append(p.seat + " "); li.append(el("span", p.card[1] === "H" || p.card[1] === "D" ? "red" : "", rankText(p.card) + SYM[p.card[1]])); li.append("  "); });
+      li.append("won by " + t.winner);
+      ol.append(li);
+    }
+    d.append(ol);
+  }
+  if (h.claimed) d.append(el("p", "", "The last " + h.claimed.remaining + " tricks were settled by agreement."));
+  return d;
 }
 </script>
 </body>
