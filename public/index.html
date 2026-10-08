@@ -1,0 +1,543 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bridge with friends</title>
+<style>
+  :root {
+    --felt: #145a43;
+    --felt-deep: #0b3a2c;
+    --felt-light: #1d7157;
+    --paper: #fbf9f2;
+    --ink: #1c1c1c;
+    --red: #b3262d;
+    --brass: #e3bf63;
+    --mist: #b8d6c8;
+    --serif: "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    min-height: 100vh;
+    background: radial-gradient(ellipse at 50% 30%, var(--felt) 0%, var(--felt-deep) 80%);
+    color: #eef6f1;
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.4;
+    padding: env(safe-area-inset-top, 0) 0 env(safe-area-inset-bottom, 0);
+  }
+  [hidden] { display: none !important; }
+  h1, h2 { font-family: var(--serif); font-weight: 600; margin: 0; }
+  button { font: inherit; cursor: pointer; }
+  button:focus-visible { outline: 3px solid var(--brass); outline-offset: 2px; }
+
+  /* Entry screen */
+  #entry { max-width: 420px; margin: 0 auto; padding: 56px 20px; }
+  #entry h1 { font-size: 44px; line-height: 1.05; margin-bottom: 8px; }
+  #entry p { color: var(--mist); margin: 0 0 28px; }
+  .field { display: block; margin-bottom: 14px; }
+  .field span { display: block; margin-bottom: 4px; color: var(--mist); }
+  input {
+    width: 100%; padding: 11px 12px; font: inherit; color: var(--ink);
+    background: var(--paper); border: 2px solid transparent; border-radius: 6px;
+  }
+  input:focus-visible { outline: none; border-color: var(--brass); }
+  .row { display: flex; gap: 10px; }
+  .row > * { flex: 1; }
+  .btn {
+    padding: 11px 16px; border-radius: 6px; border: 2px solid var(--brass);
+    background: var(--brass); color: #2a2208; font-weight: 600;
+  }
+  .btn.quiet { background: transparent; color: var(--brass); }
+  .btn.small { padding: 5px 10px; font-size: 13px; }
+  .btn:disabled { opacity: .4; cursor: default; }
+  .or { margin: 22px 0 12px; color: var(--mist); }
+
+  /* Game screen */
+  #game { max-width: 980px; margin: 0 auto; padding: 12px 12px 40px; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  .topbar h2 { font-size: 22px; }
+  .topbar .code { font-family: var(--serif); letter-spacing: .12em; }
+  .topbar .tools { display: flex; gap: 8px; }
+
+  #table {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(200px, 250px) minmax(0, 1fr);
+    grid-template-areas: ". top ." "left mid right" ". bottom .";
+    gap: 10px;
+    padding: 14px;
+    border: 3px solid #0a2d22;
+    border-radius: 18px;
+    background: var(--felt);
+    box-shadow: inset 0 0 0 2px rgba(227,191,99,.25);
+  }
+  .pos-top { grid-area: top; } .pos-left { grid-area: left; }
+  .pos-right { grid-area: right; } .pos-bottom { grid-area: bottom; }
+  #mid { grid-area: mid; display: grid; place-items: center; min-height: 190px; }
+
+  .seat { text-align: center; padding: 6px; border-radius: 10px; border: 2px solid transparent; min-width: 0; }
+  .seat.turn { border-color: var(--brass); background: rgba(227,191,99,.1); }
+  .seat .who { font-family: var(--serif); font-size: 17px; }
+  .seat .who small { font-family: var(--sans); font-size: 12px; color: var(--mist); }
+  .chips { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; margin: 3px 0 6px; min-height: 18px; }
+  .chip { font-size: 11px; padding: 1px 7px; border-radius: 99px; background: rgba(0,0,0,.28); color: var(--mist); }
+  .chip.gold { background: var(--brass); color: #2a2208; }
+  .seat-actions { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+
+  /* Cards */
+  .card {
+    width: 40px; height: 58px; padding: 3px 0 0; margin: 0;
+    background: var(--paper); color: var(--ink);
+    border: 1px solid #b9b5a6; border-radius: 6px;
+    font-family: var(--serif); font-size: 17px; line-height: 1.05; font-weight: 700;
+    display: inline-flex; flex-direction: column; align-items: center; justify-content: flex-start;
+    box-shadow: 0 1px 2px rgba(0,0,0,.35);
+  }
+  .card.red { color: var(--red); }
+  .card .s { font-size: 20px; font-weight: 400; }
+  .card.sm { width: 32px; height: 46px; font-size: 14px; }
+  .card.sm .s { font-size: 16px; }
+  .card.back {
+    background: repeating-linear-gradient(45deg, #274f9b 0 4px, #2f5cae 4px 8px);
+    border: 2px solid var(--paper);
+  }
+  button.card:disabled { cursor: default; }
+  button.card.playable { cursor: pointer; transform: translateY(-6px); border-color: var(--brass); }
+  button.card.playable:hover { transform: translateY(-11px); }
+  button.card.dim { opacity: .55; }
+
+  .myhand { display: flex; flex-wrap: wrap; justify-content: center; padding-top: 8px; }
+  .myhand .card { margin-left: -12px; }
+  .myhand .card:first-child { margin-left: 0; }
+  .suitrows { display: flex; flex-direction: column; gap: 4px; align-items: center; }
+  .suitrow { display: flex; }
+  .suitrow .card { margin-left: -14px; }
+  .suitrow .card:first-child { margin-left: 0; }
+  .backs { display: flex; justify-content: center; }
+  .backs .card { width: 18px; height: 26px; margin-left: -8px; border-width: 1px; }
+  .backs .card:first-child { margin-left: 0; }
+
+  /* Trick area */
+  #trick {
+    display: grid; grid-template-columns: repeat(3, 54px); grid-template-rows: repeat(3, 70px);
+    grid-template-areas: ". t ." "l . r" ". b .";
+    gap: 4px; justify-content: center;
+  }
+  #trick .slot { display: grid; place-items: center; }
+  #trick .win .card { outline: 3px solid var(--brass); outline-offset: 1px; }
+  .slot-top { grid-area: t; } .slot-left { grid-area: l; } .slot-right { grid-area: r; } .slot-bottom { grid-area: b; }
+  #midnote { text-align: center; color: var(--mist); font-size: 13px; margin-top: 6px; }
+
+  /* Info and actions */
+  #info { display: flex; gap: 8px 18px; flex-wrap: wrap; justify-content: space-between; margin: 12px 2px; color: var(--mist); }
+  #info b { color: #fff; font-family: var(--serif); font-size: 17px; }
+  #actions { margin: 12px 0; padding: 12px; background: rgba(0,0,0,.22); border-radius: 12px; }
+  #actions .msg { margin: 0 0 8px; }
+  #actions .msg.big { font-family: var(--serif); font-size: 19px; }
+  .bidgrid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; margin-bottom: 8px; max-width: 420px; }
+  .bidgrid button, .bidextra button {
+    padding: 8px 0; border-radius: 6px; border: 1px solid #b9b5a6; background: var(--paper);
+    color: var(--ink); font-family: var(--serif); font-weight: 700; font-size: 16px;
+  }
+  .bidgrid button:disabled, .bidextra button:disabled { opacity: .3; cursor: default; }
+  .bidextra { display: flex; gap: 6px; }
+  .bidextra button { padding: 8px 18px; }
+  .red { color: var(--red); }
+
+  #bids table { border-collapse: collapse; margin: 0 auto; min-width: 280px; }
+  #bids th, #bids td { padding: 4px 12px; text-align: center; font-family: var(--serif); }
+  #bids th { color: var(--mist); font-weight: 400; border-bottom: 1px solid rgba(255,255,255,.2); }
+  #bids td .red { color: #ff9a9f; }
+
+  #toast {
+    position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%);
+    background: #fff; color: #7a1117; padding: 10px 16px; border-radius: 8px;
+    box-shadow: 0 4px 14px rgba(0,0,0,.4); max-width: 90vw; z-index: 10;
+  }
+
+  @media (max-width: 680px) {
+    #table { grid-template-columns: minmax(0,1fr) minmax(0,1fr); grid-template-areas: "top top" "left right" "mid mid" "bottom bottom"; padding: 8px; }
+    .card.sm { width: 28px; height: 40px; font-size: 12px; }
+    .card.sm .s { font-size: 14px; }
+    .suitrow .card { margin-left: -12px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+  button.card { transition: transform .12s; }
+</style>
+</head>
+<body>
+
+<section id="entry">
+  <h1>Bridge with friends</h1>
+  <p>Open a table, send the link, and play from your own homes.</p>
+  <label class="field"><span>Your name</span><input id="name" maxlength="20" autocomplete="nickname"></label>
+  <button class="btn" id="create" style="width:100%">Open a new table</button>
+  <div class="or">Or join a friend's table</div>
+  <div class="row">
+    <input id="code" maxlength="4" placeholder="Table code" aria-label="Table code" style="text-transform:uppercase">
+    <button class="btn quiet" id="join">Join</button>
+  </div>
+</section>
+
+<section id="game" hidden>
+  <div class="topbar">
+    <h2>Table <span class="code" id="tcode"></span></h2>
+    <div class="tools">
+      <button class="btn quiet small" id="copy">Copy invite link</button>
+      <button class="btn quiet small" id="leave">Leave table</button>
+    </div>
+  </div>
+  <div id="table">
+    <div class="seat pos-top" id="p-top"></div>
+    <div class="seat pos-left" id="p-left"></div>
+    <div id="mid"><div><div id="trick"></div><div id="midnote"></div></div></div>
+    <div class="seat pos-right" id="p-right"></div>
+    <div class="seat pos-bottom" id="p-bottom"></div>
+  </div>
+  <div id="info"></div>
+  <div id="actions"></div>
+  <div id="bids"></div>
+</section>
+
+<div id="toast" hidden role="status"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const SEATS = ["N", "E", "S", "W"];
+const NAMES = { N: "North", E: "East", S: "South", W: "West" };
+const SYM = { S: "♠", H: "♥", C: "♣", D: "♦", NT: "NT" };
+const SUIT_ORDER = ["S", "H", "C", "D"];
+const RANKS = "23456789TJQKA";
+const PLACES = ["bottom", "left", "top", "right"]; // clockwise, starting from you
+
+// A random ID kept in this browser. It is what lets you reconnect to your seat.
+let pid = localStorage.getItem("bridgePid");
+if (!pid) {
+  pid = (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2) + Date.now());
+  localStorage.setItem("bridgePid", pid);
+}
+const socket = io({ auth: { playerId: pid } });
+let view = null;
+
+const $ = (id) => document.getElementById(id);
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text != null) e.textContent = text;
+  return e;
+}
+let toastTimer;
+function toast(msg) {
+  const t = $("toast");
+  t.textContent = msg; t.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => (t.hidden = true), 3200);
+}
+function send(event, data) {
+  socket.emit(event, data || {}, (res) => { if (res && res.error) toast(res.error); });
+}
+
+// ---------- Entry ----------
+const urlRoom = (new URLSearchParams(location.search).get("room") || "").toUpperCase();
+$("name").value = localStorage.getItem("bridgeName") || "";
+$("code").value = urlRoom;
+
+function enter(event, code) {
+  const name = $("name").value.trim() || localStorage.getItem("bridgeName") || "Player";
+  localStorage.setItem("bridgeName", name);
+  socket.emit(event, { name, code }, (res) => {
+    if (res.error) {
+      toast(res.error);
+      localStorage.removeItem("bridgeRoom");
+      $("game").hidden = true; $("entry").hidden = false;
+      return;
+    }
+    localStorage.setItem("bridgeRoom", res.code);
+    history.replaceState(null, "", "?room=" + res.code);
+  });
+}
+$("create").onclick = () => enter("createRoom");
+$("join").onclick = () => {
+  const code = $("code").value.trim().toUpperCase();
+  if (!code) return toast("Enter the four-letter table code");
+  enter("joinRoom", code);
+};
+// Rejoin automatically after a refresh or a dropped connection.
+socket.on("connect", () => {
+  const saved = localStorage.getItem("bridgeRoom");
+  const code = urlRoom || saved;
+  if (saved && (!urlRoom || urlRoom === saved)) enter("joinRoom", code);
+});
+$("leave").onclick = () => {
+  socket.emit("leave", {}, () => {
+    localStorage.removeItem("bridgeRoom");
+    location.href = location.pathname;
+  });
+};
+$("copy").onclick = async () => {
+  const link = location.origin + "/?room=" + view.code;
+  try { await navigator.clipboard.writeText(link); toast("Invite link copied"); }
+  catch { prompt("Copy this invite link:", link); }
+};
+
+// ---------- Rendering ----------
+socket.on("state", (v) => { view = v; render(); });
+
+function suitSpan(suit) {
+  const s = el("span", suit === "H" || suit === "D" ? "red" : "", SYM[suit]);
+  return s;
+}
+function callNode(call) {
+  const w = el("span");
+  if (call === "P") w.textContent = "Pass";
+  else if (call === "X" || call === "XX") w.textContent = call;
+  else { w.append(call[0]); w.append(suitSpan(call.slice(1))); }
+  return w;
+}
+function cardNode(code, opts = {}) {
+  const suit = code[1];
+  const playable = opts.playable;
+  const n = el(playable !== undefined ? "button" : "div", "card" + (opts.sm ? " sm" : "") + (suit === "H" || suit === "D" ? " red" : ""));
+  n.append(el("span", "r", code[0] === "T" ? "10" : code[0]), el("span", "s", SYM[suit]));
+  n.setAttribute("aria-label", (code[0] === "T" ? "10" : code[0]) + " of " + SYM[suit]);
+  if (playable !== undefined) {
+    n.disabled = !playable;
+    if (playable) { n.classList.add("playable"); n.onclick = () => send("play", { card: code }); }
+    else if (opts.dim) n.classList.add("dim");
+  }
+  return n;
+}
+function sortedCards(hand) {
+  return hand.slice().sort((a, b) => {
+    const d = SUIT_ORDER.indexOf(a[1]) - SUIT_ORDER.indexOf(b[1]);
+    return d || RANKS.indexOf(b[0]) - RANKS.indexOf(a[0]);
+  });
+}
+function handRow(hand, seat) {
+  const wrap = el("div", "myhand");
+  for (const c of sortedCards(hand)) wrap.append(cardNode(c, cardOpts(c, seat, false)));
+  return wrap;
+}
+function suitRows(hand, seat) {
+  const wrap = el("div", "suitrows");
+  for (const s of SUIT_ORDER) {
+    const cards = sortedCards(hand).filter((c) => c[1] === s);
+    if (!cards.length) continue;
+    const row = el("div", "suitrow");
+    cards.forEach((c) => row.append(cardNode(c, cardOpts(c, seat, true))));
+    wrap.append(row);
+  }
+  return wrap;
+}
+function cardOpts(card, seat, sm) {
+  const mine = view.phase === "playing" && view.yourTurn && view.actingSeat === seat;
+  if (!mine) return { sm };
+  const ok = view.legal.includes(card);
+  return { sm, playable: ok, dim: !ok };
+}
+function backs(count) {
+  const w = el("div", "backs");
+  for (let i = 0; i < count; i++) w.append(el("div", "card back"));
+  return w;
+}
+
+function render() {
+  $("entry").hidden = true;
+  $("game").hidden = false;
+  $("tcode").textContent = view.code;
+  const base = view.you || "S";
+  const place = (seat) => PLACES[(SEATS.indexOf(seat) - SEATS.indexOf(base) + 4) % 4];
+
+  for (const seat of SEATS) renderSeat(seat, place(seat));
+  renderTrick(place);
+  renderInfo();
+  renderActions();
+  renderBids();
+}
+
+function renderSeat(seat, pos) {
+  const box = $("p-" + pos);
+  box.replaceChildren();
+  const info = view.seats[seat];
+  box.classList.toggle("turn", view.phase !== "lobby" && view.turn === seat);
+
+  const who = el("div", "who", NAMES[seat]);
+  if (info) { who.append(" "); who.append(el("small", "", (info.bot ? "Bot" : info.name) + (seat === view.you ? " (you)" : ""))); }
+  box.append(who);
+
+  const chips = el("div", "chips");
+  if (view.phase !== "lobby") {
+    if (view.dealer === seat) chips.append(el("span", "chip", "Dealer"));
+    if (view.contract && view.contract.declarer === seat) chips.append(el("span", "chip gold", "Declarer"));
+    if (view.contract && view.contract.dummy === seat) chips.append(el("span", "chip gold", "Dummy"));
+  }
+  if (info && info.offline) chips.append(el("span", "chip", "Offline"));
+  box.append(chips);
+
+  // Seat controls before the deal
+  const actions = el("div", "seat-actions");
+  if (view.phase === "lobby") {
+    if (!info) {
+      const sit = el("button", "btn small", "Sit here");
+      sit.onclick = () => send("sit", { seat });
+      actions.append(sit);
+      if (view.host) {
+        const bot = el("button", "btn quiet small", "Add bot");
+        bot.onclick = () => send("addBot", { seat });
+        actions.append(bot);
+      }
+    } else if (seat === view.you) {
+      const up = el("button", "btn quiet small", "Stand up");
+      up.onclick = () => send("stand");
+      actions.append(up);
+    } else if (info.bot && view.host) {
+      const rm = el("button", "btn quiet small", "Remove bot");
+      rm.onclick = () => send("removeBot", { seat });
+      actions.append(rm);
+    }
+  } else if (info && info.offline && view.host) {
+    const rep = el("button", "btn quiet small", "Bot takes over");
+    rep.onclick = () => send("replaceWithBot", { seat });
+    actions.append(rep);
+  }
+  box.append(actions);
+
+  // Cards
+  if (view.phase === "lobby") return;
+  if (seat === view.you) box.append(handRow(view.hand, seat));
+  else if (view.reveal) box.append(suitRows(view.reveal[seat], seat));
+  else if (view.dummy && view.dummy.seat === seat) box.append(suitRows(view.dummy.hand, seat));
+  else box.append(backs(view.counts[seat]));
+}
+
+function renderTrick(place) {
+  const t = $("trick");
+  t.replaceChildren();
+  const note = $("midnote");
+  note.textContent = "";
+  if (view.phase === "lobby") { note.textContent = "Waiting to deal"; return; }
+  for (const play of view.trick || []) {
+    const slot = el("div", "slot slot-" + place(play.seat) + (view.trickWinner === play.seat ? " win" : ""));
+    slot.append(cardNode(play.card));
+    t.append(slot);
+  }
+  if (view.trickWinner) note.textContent = NAMES[view.trickWinner] + " wins the trick";
+}
+
+function renderInfo() {
+  const box = $("info");
+  box.replaceChildren();
+  if (view.phase === "lobby") return;
+  const c = view.contract;
+  const left = el("div");
+  if (c) {
+    left.append("Contract ");
+    const b = el("b");
+    b.append(String(c.level), suitSpan(c.denom === "NT" ? "NT" : c.denom), c.doubled);
+    left.append(b, " by " + NAMES[c.declarer]);
+  } else left.append("Bidding. " + NAMES[view.dealer] + " dealt.");
+  box.append(left);
+  if (c) {
+    const need = 6 + c.level;
+    const decl = c.declarer === "N" || c.declarer === "S" ? "NS" : "EW";
+    const got = view.tricks[decl];
+    box.append(el("div", "", "Declarer side: " + got + " of " + need + " tricks needed. Defenders: " + view.tricks[decl === "NS" ? "EW" : "NS"]));
+  }
+}
+
+function renderActions() {
+  const box = $("actions");
+  box.replaceChildren();
+  const msg = (text, big) => box.append(el("p", "msg" + (big ? " big" : ""), text));
+  if (view.message) msg(view.message);
+
+  if (view.phase === "lobby") {
+    const full = SEATS.every((s) => view.seats[s]);
+    if (!view.you) msg("Pick a seat to join the game. You need four players, and bots can fill any empty seat.");
+    else if (!full) msg("Waiting for all four seats to fill. Share the invite link with your friends.");
+    if (view.host) {
+      const b = el("button", "btn", "Deal the cards");
+      b.disabled = !full;
+      b.onclick = () => send("deal");
+      box.append(b);
+    } else if (full) msg("Waiting for the host to deal.");
+    return;
+  }
+
+  if (view.phase === "bidding") {
+    if (view.yourTurn) {
+      msg("Your bid", true);
+      const grid = el("div", "bidgrid");
+      for (let l = 1; l <= 7; l++) {
+        for (const d of ["C", "D", "H", "S", "NT"]) {
+          const call = l + d;
+          const b = el("button");
+          b.append(callNode(call));
+          b.disabled = !view.legalBids.includes(call);
+          b.onclick = () => send("bid", { call });
+          grid.append(b);
+        }
+      }
+      box.append(grid);
+      const extra = el("div", "bidextra");
+      for (const [call, label] of [["P", "Pass"], ["X", "Double"], ["XX", "Redouble"]]) {
+        const b = el("button", "", label);
+        b.disabled = !view.legalBids.includes(call);
+        b.onclick = () => send("bid", { call });
+        extra.append(b);
+      }
+      box.append(extra);
+    } else {
+      msg("Waiting for " + NAMES[view.turn] + " to bid.");
+    }
+    return;
+  }
+
+  if (view.phase === "playing") {
+    if (view.trickWinner) return msg(NAMES[view.trickWinner] + " takes the trick.");
+    if (view.yourTurn) {
+      const forDummy = view.actingSeat !== view.you;
+      msg(forDummy ? "Your turn. Play a card from the dummy (" + NAMES[view.actingSeat] + ")." : "Your turn. Play a card.", true);
+    } else if (view.you && view.contract.dummy === view.you) {
+      msg("You are the dummy. Your partner plays your cards.");
+    } else msg("Waiting for " + NAMES[view.turn] + " to play.");
+    return;
+  }
+
+  if (view.phase === "finished") {
+    msg(view.result.text, true);
+    msg("North-South took " + view.tricks.NS + " tricks, East-West took " + view.tricks.EW + ". Scoring is not built yet.");
+    if (view.host) {
+      const b = el("button", "btn", "Deal the next hand");
+      b.onclick = () => send("deal");
+      box.append(b);
+    } else msg("Waiting for the host to deal the next hand.");
+  }
+}
+
+function renderBids() {
+  const box = $("bids");
+  box.replaceChildren();
+  if (view.phase === "lobby" || !view.bids || !view.bids.length) return;
+  const table = el("table");
+  const head = el("tr");
+  SEATS.forEach((s) => head.append(el("th", "", NAMES[s])));
+  table.append(head);
+  const cells = Array(SEATS.indexOf(view.dealer)).fill(null).concat(view.bids);
+  for (let i = 0; i < cells.length; i += 4) {
+    const tr = el("tr");
+    for (let j = 0; j < 4; j++) {
+      const td = el("td");
+      const b = cells[i + j];
+      if (b) td.append(callNode(b.call));
+      tr.append(td);
+    }
+    table.append(tr);
+  }
+  box.append(table);
+}
+</script>
+</body>
+</html>
