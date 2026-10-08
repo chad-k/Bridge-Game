@@ -6,6 +6,8 @@ const SEATS = ["N", "E", "S", "W"]; // clockwise
 const SUITS = ["C", "D", "H", "S"];
 const RANKS = ["2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A"];
 const DENOMS = ["C", "D", "H", "S", "NT"]; // lowest to highest
+const AVATARS = ["🦊", "🐻", "🐼", "🦉", "🐙", "🦁", "🐸", "🐧", "🦄", "🐯", "🐨", "🦋"];
+const BOT_AVATAR = "🤖";
 const SYMBOL = { C: "♣", D: "♦", H: "♥", S: "♠", NT: "NT" };
 
 const next = (s) => SEATS[(SEATS.indexOf(s) + 1) % 4];
@@ -43,6 +45,7 @@ function createRoom(code, hostId) {
     dummyShown: false,
     result: null,
     message: "",
+    rubber: newRubber(1),
     updated: Date.now(),
   };
 }
@@ -244,12 +247,112 @@ function finishHand(room) {
       `${contractText(c)} by ${c.declarer}: ` +
       (diff > 0 ? `made with ${diff} overtrick${diff > 1 ? "s" : ""}` : diff === 0 ? "made exactly" : `down ${-diff}`),
   };
+  room.result.score = scoreHand(room);
+  const sum = (sd) => room.result.score.items.filter((i) => i.side === sd).reduce((a, i) => a + i.pts, 0);
+  room.rubber.log.push({ text: room.result.text, NS: sum("NS"), EW: sum("EW") });
 }
 
 function dealNext(room) {
   if (room.phase === "finished") room.dealer = next(room.dealer);
+  if (room.rubber.over) room.rubber = newRubber(room.rubber.no + 1);
   room.message = "";
   startDeal(room);
+}
+
+// ---------- Scoring (rubber bridge) ----------
+
+function newRubber(no) {
+  return {
+    no,
+    games: { NS: 0, EW: 0 }, // games won; a side with a game is vulnerable
+    below: { NS: 0, EW: 0 }, // contract points in the current game
+    belowAll: { NS: 0, EW: 0 }, // all contract points in the rubber
+    above: { NS: 0, EW: 0 }, // bonuses and penalties
+    over: false,
+    winner: null,
+    log: [],
+  };
+}
+
+const trickValue = (denom) => (denom === "C" || denom === "D" ? 20 : 30);
+
+// Scores the finished hand into room.rubber and returns the itemised breakdown.
+function scoreHand(room) {
+  const c = room.contract;
+  const dSide = side(c.declarer);
+  const oSide = dSide === "NS" ? "EW" : "NS";
+  const r = room.rubber;
+  const vul = r.games[dSide] > 0; // vulnerability at the start of this hand
+  const diff = room.tricks[dSide] - (6 + c.level);
+  const items = [];
+  const add = (sd, line, label, pts) => pts && items.push({ side: sd, line, label, pts });
+
+  if (diff >= 0) {
+    const mult = c.doubled === "XX" ? 4 : c.doubled === "X" ? 2 : 1;
+    const base = c.denom === "NT" ? 40 + 30 * (c.level - 1) : trickValue(c.denom) * c.level;
+    add(dSide, "below", "Contract tricks", base * mult);
+    if (diff > 0) {
+      const per = c.doubled === "XX" ? (vul ? 400 : 200) : c.doubled === "X" ? (vul ? 200 : 100) : trickValue(c.denom);
+      add(dSide, "above", `${diff} overtrick${diff > 1 ? "s" : ""}`, per * diff);
+    }
+    if (c.doubled === "X") add(dSide, "above", "Bonus for making a doubled contract", 50);
+    if (c.doubled === "XX") add(dSide, "above", "Bonus for making a redoubled contract", 100);
+    if (c.level === 6) add(dSide, "above", "Small slam bonus", vul ? 750 : 500);
+    if (c.level === 7) add(dSide, "above", "Grand slam bonus", vul ? 1500 : 1000);
+  } else {
+    const n = -diff;
+    let pts = 0;
+    if (!c.doubled) pts = n * (vul ? 100 : 50);
+    else {
+      for (let i = 1; i <= n; i++) {
+        if (vul) pts += i === 1 ? 200 : 300;
+        else pts += i === 1 ? 100 : i <= 3 ? 200 : 300;
+      }
+      if (c.doubled === "XX") pts *= 2;
+    }
+    add(oSide, "above", `${n} undertrick${n > 1 ? "s" : ""}`, pts);
+  }
+
+  for (const it of items) {
+    if (it.line === "above") r.above[it.side] += it.pts;
+    else {
+      r.below[it.side] += it.pts;
+      r.belowAll[it.side] += it.pts;
+    }
+  }
+
+  let gameWon = null;
+  let rubberBonus = null;
+  if (r.below[dSide] >= 100) {
+    r.games[dSide]++;
+    r.below = { NS: 0, EW: 0 }; // a new game starts from zero for both sides
+    gameWon = dSide;
+    if (r.games[dSide] === 2) {
+      const bonus = r.games[oSide] === 0 ? 700 : 500;
+      r.above[dSide] += bonus;
+      r.over = true;
+      r.winner = dSide;
+      rubberBonus = { side: dSide, pts: bonus };
+      items.push({ side: dSide, line: "above", label: "Rubber bonus", pts: bonus });
+    }
+  }
+  return { items, gameWon, rubberBonus };
+}
+
+function rubberView(room) {
+  const r = room.rubber;
+  const total = (sd) => r.above[sd] + r.belowAll[sd];
+  return {
+    no: r.no,
+    games: r.games,
+    below: r.below,
+    above: r.above,
+    total: { NS: total("NS"), EW: total("EW") },
+    vul: { NS: r.games.NS > 0, EW: r.games.EW > 0 },
+    over: r.over,
+    winner: r.winner,
+    log: r.log.slice(-8),
+  };
 }
 
 // ---------- What each player is allowed to see ----------
@@ -262,6 +365,7 @@ function viewFor(room, playerId) {
     host: room.host === playerId,
     you: mySeat,
     message: room.message,
+    rubber: rubberView(room),
     seats: {},
   };
   for (const s of SEATS) {
@@ -269,7 +373,7 @@ function viewFor(room, playerId) {
     if (!seat) view.seats[s] = null;
     else {
       const m = seat.bot ? null : room.members.get(seat.playerId);
-      view.seats[s] = { name: seat.name, bot: !!seat.bot, offline: !seat.bot && !(m && m.socketId) };
+      view.seats[s] = { name: seat.name, avatar: seat.bot ? BOT_AVATAR : seat.avatar, bot: !!seat.bot, offline: !seat.bot && !(m && m.socketId) };
     }
   }
   if (room.phase === "lobby") return view;
@@ -304,6 +408,6 @@ function viewFor(room, playerId) {
 }
 
 module.exports = {
-  SEATS, next, partner, side, createRoom, seatOf, startDeal, makeBid, makePlay, resolveTrick,
-  dealNext, viewFor, controller, legalCards, legalBids, validateBid,
+  SEATS, AVATARS, next, partner, side, createRoom, seatOf, startDeal, makeBid, makePlay, resolveTrick,
+  dealNext, viewFor, scoreHand, newRubber, controller, legalCards, legalBids, validateBid,
 };

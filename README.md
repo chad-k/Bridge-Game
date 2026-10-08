@@ -15,7 +15,7 @@ to play, bid yourself and the bots will pass behind you.
 To try it with real multiple players on one machine, open the invite link in a second
 browser profile or a private window (each browser has its own player ID).
 
-    npm test      # plays 300 random hands through the rules engine
+    npm test      # plays 300 random hands and checks the scoring rules
 
 ## Put it on Render
 
@@ -34,16 +34,18 @@ Things to know about Render's free plan:
 
 ## How it works
 
-- `game.js` is the rules engine (dealing, bidding, follow-suit, tricks, dummy). No network code.
+- `game.js` is the rules engine (dealing, bidding, follow-suit, tricks, dummy, rubber scoring). No network code.
 - `server.js` handles tables, seats, bots and Socket.IO. The server is the only authority:
   clients send a bid or a card, and the server checks it.
 - `viewFor()` in `game.js` decides what each player may see. You get your own hand and the
   dummy once it goes down. Other hands are never sent to your browser until the hand ends.
+- Avatars are a fixed set of emoji chosen on the entry screen (click your own avatar at the table to change it). Bots use a robot.
 - Your browser stores a random player ID so a refresh or dropped connection returns you to
   your seat.
 
 ## Not built yet
 
-- Scoring (rubber or duplicate). The hand result shows tricks made or down only.
+- Honors bonuses (100 or 150 for holding four or five top trumps), and duplicate scoring.
+- Ending an unfinished rubber, which would add the 300 and 100 bonuses for a game or part score.
 - Smarter bots. They pass in the auction and play random legal cards.
 - Chat, undo and claim, spectators, a replay of the last trick.

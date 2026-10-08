@@ -86,28 +86,29 @@ io.on("connection", (socket) => {
     return room ? { room, seat: game.seatOf(room, playerId) } : {};
   };
 
-  const enter = (room, name, ack) => {
+  const enter = (room, name, avatar, ack) => {
     const existing = room.members.get(playerId);
-    room.members.set(playerId, { name: existing ? existing.name : name, socketId: socket.id });
-    // If they are already seated, keep the seat's display name in sync.
+    const pick = game.AVATARS.includes(avatar) ? avatar : existing ? existing.avatar : game.AVATARS[0];
+    room.members.set(playerId, { name: existing ? existing.name : name, avatar: pick, socketId: socket.id });
+    // If they are already seated, keep the seat's display details in sync.
     const seat = game.seatOf(room, playerId);
-    if (seat) room.seats[seat].name = room.members.get(playerId).name;
+    if (seat) Object.assign(room.seats[seat], { name: room.members.get(playerId).name, avatar: pick });
     socket.data.code = room.code;
     socket.join(room.code);
     ack({ ok: true, code: room.code });
     afterChange(room);
   };
 
-  socket.on("createRoom", ({ name } = {}, ack = () => {}) => {
+  socket.on("createRoom", ({ name, avatar } = {}, ack = () => {}) => {
     const room = game.createRoom(makeCode(), playerId);
     rooms.set(room.code, room);
-    enter(room, cleanName(name), ack);
+    enter(room, cleanName(name), avatar, ack);
   });
 
-  socket.on("joinRoom", ({ code, name } = {}, ack = () => {}) => {
+  socket.on("joinRoom", ({ code, name, avatar } = {}, ack = () => {}) => {
     const room = rooms.get(String(code || "").trim().toUpperCase());
     if (!room) return ack({ error: "No table with that code. It may have expired." });
-    enter(room, cleanName(name), ack);
+    enter(room, cleanName(name), avatar, ack);
   });
 
   socket.on("sit", ({ seat } = {}, ack = () => {}) => {
@@ -116,9 +117,19 @@ io.on("connection", (socket) => {
     if (room.phase !== "lobby") return ack({ error: "The game has already started" });
     if (!game.SEATS.includes(seat) || room.seats[seat]) return ack({ error: "That seat is taken" });
     if (mine) room.seats[mine] = null;
-    room.seats[seat] = { playerId, name: room.members.get(playerId).name };
+    const me = room.members.get(playerId);
+    room.seats[seat] = { playerId, name: me.name, avatar: me.avatar };
     ack({ ok: true });
     afterChange(room);
+  });
+
+  socket.on("setAvatar", ({ avatar } = {}, ack = () => {}) => {
+    const { room, seat } = ctx();
+    if (!room || !game.AVATARS.includes(avatar)) return ack({ error: "Pick one of the avatars shown" });
+    room.members.get(playerId).avatar = avatar;
+    if (seat) room.seats[seat].avatar = avatar;
+    ack({ ok: true });
+    broadcast(room);
   });
 
   socket.on("stand", (_d, ack = () => {}) => {
