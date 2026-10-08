@@ -1,11 +1,11 @@
 {
   "name": "bridge-game",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Online bridge for friends, built with Express and Socket.IO",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "test": "node test/sim.js"
+    "test": "node test/sim.js && node test/features.js && node test/bots.js && node test/server.js && node test/client.js"
   },
   "engines": {
     "node": ">=20"
