@@ -1,4 +1,5 @@
 # Bridge with friends
+# Check out my app at - https://bridge-game-wml9.onrender.com/
 
 A small online bridge table. Up to four friends join a table by link, bid, and play.
 Bots can fill empty seats so you can test alone.
