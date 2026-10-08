@@ -151,6 +151,39 @@
   #bids th { color: var(--mist); font-weight: 400; border-bottom: 1px solid rgba(255,255,255,.2); }
   #bids td .red { color: #ff9a9f; }
 
+
+  #score { margin-top: 18px; padding: 14px; background: rgba(0,0,0,.22); border-radius: 12px; }
+  #score h3 { font-family: var(--serif); font-weight: 600; font-size: 18px; margin: 0 0 8px; }
+  #score table { border-collapse: collapse; width: 100%; max-width: 460px; }
+  #score th, #score td { padding: 5px 8px; text-align: right; }
+  #score th:first-child, #score td:first-child { text-align: left; color: var(--mist); font-weight: 400; }
+  #score thead th { border-bottom: 1px solid rgba(255,255,255,.2); font-family: var(--serif); font-weight: 600; }
+  #score tr.total td { border-top: 1px solid rgba(255,255,255,.2); font-family: var(--serif); font-size: 18px; font-weight: 700; color: #fff; }
+  #score .vul { color: var(--brass); }
+  #score ul { margin: 12px 0 0; padding-left: 18px; color: var(--mist); }
+  #score li { margin: 2px 0; }
+  .breakdown { margin: 0 0 10px; padding: 0; list-style: none; }
+  .breakdown li { display: flex; justify-content: space-between; gap: 16px; max-width: 460px; padding: 2px 0; }
+  #actions .note { color: var(--brass); }
+
+
+  .avatars { display: flex; flex-wrap: wrap; gap: 6px; }
+  .avatars button {
+    width: 44px; height: 44px; border-radius: 50%; font-size: 24px; line-height: 1;
+    background: rgba(0,0,0,.28); border: 2px solid transparent; color: inherit; padding: 0;
+  }
+  .avatars button[aria-checked="true"] { border-color: var(--brass); background: rgba(227,191,99,.2); }
+  .avatar-picker { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; padding: 10px 12px; background: rgba(0,0,0,.22); border-radius: 12px; color: var(--mist); }
+  .avatar {
+    width: 50px; height: 50px; margin: 0 auto 4px; padding: 0; border-radius: 50%;
+    display: grid; place-items: center; font-size: 28px; line-height: 1; color: inherit;
+    background: rgba(0,0,0,.28); border: 2px solid rgba(255,255,255,.22);
+  }
+  .avatar.empty { border-style: dashed; color: var(--mist); font-size: 20px; }
+  .avatar.off { opacity: .45; }
+  button.avatar { cursor: pointer; }
+  .seat.turn .avatar { border-color: var(--brass); }
+
   #toast {
     position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%);
     background: #fff; color: #7a1117; padding: 10px 16px; border-radius: 8px;
@@ -173,6 +206,7 @@
   <h1>Bridge with friends</h1>
   <p>Open a table, send the link, and play from your own homes.</p>
   <label class="field"><span>Your name</span><input id="name" maxlength="20" autocomplete="nickname"></label>
+  <div class="field"><span id="avlabel">Your avatar</span><div class="avatars" id="entryAvatars" role="radiogroup" aria-labelledby="avlabel"></div></div>
   <button class="btn" id="create" style="width:100%">Open a new table</button>
   <div class="or">Or join a friend's table</div>
   <div class="row">
@@ -189,6 +223,9 @@
       <button class="btn quiet small" id="leave">Leave table</button>
     </div>
   </div>
+  <div id="avatarPicker" class="avatar-picker" hidden>
+    <span>Choose your avatar</span><div class="avatars" id="gameAvatars"></div>
+  </div>
   <div id="table">
     <div class="seat pos-top" id="p-top"></div>
     <div class="seat pos-left" id="p-left"></div>
@@ -199,6 +236,7 @@
   <div id="info"></div>
   <div id="actions"></div>
   <div id="bids"></div>
+  <div id="score"></div>
 </section>
 
 <div id="toast" hidden role="status"></div>
@@ -210,6 +248,7 @@ const NAMES = { N: "North", E: "East", S: "South", W: "West" };
 const SYM = { S: "♠", H: "♥", C: "♣", D: "♦", NT: "NT" };
 const SUIT_ORDER = ["S", "H", "C", "D"];
 const RANKS = "23456789TJQKA";
+const PAIRS = { NS: "North-South", EW: "East-West" };
 const PLACES = ["bottom", "left", "top", "right"]; // clockwise, starting from you
 
 // A random ID kept in this browser. It is what lets you reconnect to your seat.
@@ -228,6 +267,23 @@ function el(tag, cls, text) {
   if (text != null) e.textContent = text;
   return e;
 }
+const AVATARS = ["🦊", "🐻", "🐼", "🦉", "🐙", "🦁", "🐸", "🐧", "🦄", "🐯", "🐨", "🦋"];
+let myAvatar = localStorage.getItem("bridgeAvatar");
+if (!AVATARS.includes(myAvatar)) myAvatar = AVATARS[Math.floor(Math.random() * AVATARS.length)];
+
+function buildAvatarPicker(container, onPick) {
+  container.replaceChildren();
+  for (const a of AVATARS) {
+    const b = el("button", "", a);
+    b.type = "button";
+    b.setAttribute("role", "radio");
+    b.setAttribute("aria-checked", String(a === myAvatar));
+    b.setAttribute("aria-label", "Avatar " + a);
+    b.onclick = () => { myAvatar = a; localStorage.setItem("bridgeAvatar", a); onPick(a); };
+    container.append(b);
+  }
+}
+
 let toastTimer;
 function toast(msg) {
   const t = $("toast");
@@ -242,12 +298,16 @@ function send(event, data) {
 // ---------- Entry ----------
 const urlRoom = (new URLSearchParams(location.search).get("room") || "").toUpperCase();
 $("name").value = localStorage.getItem("bridgeName") || "";
+function refreshEntryPicker() {
+  buildAvatarPicker($("entryAvatars"), refreshEntryPicker);
+}
+refreshEntryPicker();
 $("code").value = urlRoom;
 
 function enter(event, code) {
   const name = $("name").value.trim() || localStorage.getItem("bridgeName") || "Player";
   localStorage.setItem("bridgeName", name);
-  socket.emit(event, { name, code }, (res) => {
+  socket.emit(event, { name, code, avatar: myAvatar }, (res) => {
     if (res.error) {
       toast(res.error);
       localStorage.removeItem("bridgeRoom");
@@ -355,6 +415,19 @@ function render() {
   renderInfo();
   renderActions();
   renderBids();
+  renderScore();
+}
+
+function toggleAvatarPicker() {
+  const box = $("avatarPicker");
+  box.hidden = !box.hidden;
+  if (!box.hidden) showGamePicker();
+}
+function showGamePicker() {
+  buildAvatarPicker($("gameAvatars"), (a) => {
+    send("setAvatar", { avatar: a });
+    $("avatarPicker").hidden = true;
+  });
 }
 
 function renderSeat(seat, pos) {
@@ -362,6 +435,15 @@ function renderSeat(seat, pos) {
   box.replaceChildren();
   const info = view.seats[seat];
   box.classList.toggle("turn", view.phase !== "lobby" && view.turn === seat);
+
+  const av = el(seat === view.you ? "button" : "div", "avatar" + (info ? "" : " empty") + (info && info.offline ? " off" : ""), info ? info.avatar : "?");
+  if (seat === view.you) {
+    av.type = "button";
+    av.title = "Change your avatar";
+    av.setAttribute("aria-label", "Change your avatar");
+    av.onclick = toggleAvatarPicker;
+  } else av.setAttribute("aria-hidden", "true");
+  box.append(av);
 
   const who = el("div", "who", NAMES[seat]);
   if (info) { who.append(" "); who.append(el("small", "", (info.bot ? "Bot" : info.name) + (seat === view.you ? " (you)" : ""))); }
@@ -508,12 +590,59 @@ function renderActions() {
 
   if (view.phase === "finished") {
     msg(view.result.text, true);
-    msg("North-South took " + view.tricks.NS + " tricks, East-West took " + view.tricks.EW + ". Scoring is not built yet.");
+    const sc = view.result.score;
+    const list = el("ul", "breakdown");
+    for (const it of sc.items) {
+      const li = el("li");
+      li.append(el("span", "", PAIRS[it.side] + ": " + it.label + (it.line === "below" ? " (below the line)" : "")));
+      li.append(el("span", "", "+" + it.pts));
+      list.append(li);
+    }
+    if (!sc.items.length) list.append(el("li", "", "No points scored this hand."));
+    box.append(list);
+    if (sc.gameWon) box.append(el("p", "msg note", PAIRS[sc.gameWon] + " won a game."));
+    if (sc.rubberBonus) box.append(el("p", "msg note", PAIRS[sc.rubberBonus.side] + " won the rubber with a bonus of " + sc.rubberBonus.pts + "."));
     if (view.host) {
-      const b = el("button", "btn", "Deal the next hand");
+      const b = el("button", "btn", view.rubber.over ? "Start a new rubber" : "Deal the next hand");
       b.onclick = () => send("deal");
       box.append(b);
-    } else msg("Waiting for the host to deal the next hand.");
+    } else msg(view.rubber.over ? "Waiting for the host to start a new rubber." : "Waiting for the host to deal the next hand.");
+  }
+}
+
+function renderScore() {
+  const box = $("score");
+  box.replaceChildren();
+  const r = view.rubber;
+  if (view.phase === "lobby" && !r.log.length) return;
+  box.append(el("h3", "", "Rubber " + r.no));
+  const table = el("table");
+  const head = el("tr");
+  head.append(el("th"), el("th", "", PAIRS.NS), el("th", "", PAIRS.EW));
+  const thead = el("thead"); thead.append(head); table.append(thead);
+  const row = (label, a, b, cls) => {
+    const tr = el("tr", cls || "");
+    tr.append(el("td", "", label), el("td", "", String(a)), el("td", "", String(b)));
+    table.append(tr);
+  };
+  row("Games won", r.games.NS, r.games.EW);
+  row("This game, below the line", r.below.NS, r.below.EW);
+  row("Bonuses and penalties", r.above.NS, r.above.EW);
+  row("Total", r.total.NS, r.total.EW, "total");
+  const vtr = el("tr");
+  vtr.append(el("td", "", "Vulnerable"),
+    el("td", r.vul.NS ? "vul" : "", r.vul.NS ? "Yes" : "No"),
+    el("td", r.vul.EW ? "vul" : "", r.vul.EW ? "Yes" : "No"));
+  table.append(vtr);
+  box.append(table);
+  if (r.log.length) {
+    box.append(el("p", "", "Hands this rubber"));
+    const ul = el("ul");
+    for (const h of r.log) {
+      const pts = [h.NS ? PAIRS.NS + " +" + h.NS : "", h.EW ? PAIRS.EW + " +" + h.EW : ""].filter(Boolean).join(", ");
+      ul.append(el("li", "", h.text + (pts ? " (" + pts + ")" : "")));
+    }
+    box.append(ul);
   }
 }
 
